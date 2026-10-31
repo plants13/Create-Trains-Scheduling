@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 package com.plants13.createtrainsscheduling;
 
 import java.util.List;

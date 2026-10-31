@@ -94,6 +94,9 @@ dependencies {
     // Create Railways Navigator (hard dependency) + its DragonLib dependency
     implementation("de.mrjulsen.mcdragonlib:dragonlib-neoforge:1.21.1-beta-3.0.28")
     implementation("maven.modrinth:create-railways-navigator:rlsRwxq3")
+
+    // 注意：Xaero 集成不在编译期依赖 Xaero 的类（其 xaero.lib 是 jar-in-jar 嵌套 jar），
+    // 而是用 mixin 的字符串 targets + 访问器接口，见 mixin/xaero 与 client/XaeroOverlay。
 }
 
 // Expand the version/mod properties in neoforge.mods.toml

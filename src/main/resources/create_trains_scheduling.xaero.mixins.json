@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.plants13.createtrainsscheduling.mixin.xaero",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.plants13.createtrainsscheduling.mixin.CtsMixinPlugin",
+  "client": [
+    "GuiMapMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

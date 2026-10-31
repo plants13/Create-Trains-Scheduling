@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 package com.plants13.createtrainsscheduling.server;
 
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
+import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.plants13.createtrainsscheduling.schedule.RouteBuilder;
@@ -148,12 +151,46 @@ public final class DispatchCommands {
         if (stations.isEmpty()) {
             throw NO_STATIONS.create();
         }
+
+        // 单站：交给调度服务，重名时自动退化到"按站点对象的精确导航"
+        if (stations.size() == 1) {
+            GlobalStation target = findStation(train, stations.get(0));
+            if (target == null) {
+                throw new SimpleCommandExceptionType(
+                        Component.translatable(PREFIX + "route.station_not_found", stations.get(0))).create();
+            }
+            DispatchService.Result result = DispatchService.setDestination(
+                    source.getServer().registryAccess(), train, target);
+            source.sendSuccess(() -> result.message(), true);
+            return result.success() ? 1 : 0;
+        }
+
+        // 多站：原生时刻表按名字匹配，任何一段有歧义都不允许（避免去错站）
+        for (String station : stations) {
+            if (DispatchService.isAmbiguous(train, station)) {
+                throw new SimpleCommandExceptionType(
+                        Component.translatable(PREFIX + "route.ambiguous", station)).create();
+            }
+        }
+
         Schedule schedule = RouteBuilder.oneOff(source.getServer().registryAccess(), stations);
         train.runtime.setSchedule(schedule, true);
         OneOffScheduleTracker.markDispatched(train);
         source.sendSuccess(() -> Component.translatable(PREFIX + "route.success",
                 train.name.getString(), String.join(" -> ", stations)), true);
         return 1;
+    }
+
+    private static GlobalStation findStation(Train train, String name) {
+        if (train.graph == null || name == null) {
+            return null;
+        }
+        for (GlobalStation station : train.graph.getPoints(EdgePointType.STATION)) {
+            if (name.equals(station.name)) {
+                return station;
+            }
+        }
+        return null;
     }
 
     private static int clear(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

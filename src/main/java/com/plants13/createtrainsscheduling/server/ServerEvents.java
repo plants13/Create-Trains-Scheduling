@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: MPL-2.0
+
 package com.plants13.createtrainsscheduling.server;
 
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
 import com.plants13.createtrainsscheduling.compat.snr.SnrCompat;
+import com.plants13.createtrainsscheduling.dispatch.DirectDispatchTracker;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -32,5 +35,6 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         OneOffScheduleTracker.tick(event.getServer());
+        DirectDispatchTracker.tick(event.getServer());
     }
 }

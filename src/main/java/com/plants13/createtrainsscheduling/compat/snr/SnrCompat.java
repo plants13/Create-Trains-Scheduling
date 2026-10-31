@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 package com.plants13.createtrainsscheduling.compat.snr;
 
 import net.neoforged.fml.ModList;
