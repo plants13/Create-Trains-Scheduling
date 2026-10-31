@@ -65,7 +65,7 @@ public final class ClientEvents {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
-        if (!XaeroOverlay.isXaeroMapScreen(mc.screen)) {
+        if (!MapScreens.isAnyMap(mc.screen)) {
             return;
         }
         try {

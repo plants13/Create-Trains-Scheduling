@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -14,10 +15,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
-import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
 import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
+import com.plants13.createtrainsscheduling.network.DispatchNetwork;
+import com.plants13.createtrainsscheduling.permissions.ModPermission;
+import com.plants13.createtrainsscheduling.permissions.PermissionManager;
 import com.plants13.createtrainsscheduling.schedule.RouteBuilder;
 import com.plants13.createtrainsscheduling.schedule.ScheduleSelfTest;
 import com.simibubi.create.Create;
@@ -72,7 +75,22 @@ public final class DispatchCommands {
                                         .executes(DispatchCommands::route))))
                 .then(Commands.literal("clear")
                         .then(Commands.argument("train", StringArgumentType.string())
-                                .executes(DispatchCommands::clear))));
+                                .executes(DispatchCommands::clear)))
+                .then(Commands.literal("perm")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("grant")
+                                .then(Commands.argument("player", StringArgumentType.string())
+                                        .then(Commands.argument("permission", StringArgumentType.word())
+                                                .executes(ctx -> changePermission(ctx, true)))))
+                        .then(Commands.literal("revoke")
+                                .then(Commands.argument("player", StringArgumentType.string())
+                                        .then(Commands.argument("permission", StringArgumentType.word())
+                                                .executes(ctx -> changePermission(ctx, false)))))
+                        .then(Commands.literal("list")
+                                .executes(ctx -> listPermissions(ctx, null))
+                                .then(Commands.argument("player", StringArgumentType.string())
+                                        .executes(ctx -> listPermissions(ctx,
+                                                StringArgumentType.getString(ctx, "player")))))));
     }
 
     private static int selftest(CommandContext<CommandSourceStack> ctx) {
@@ -122,10 +140,7 @@ public final class DispatchCommands {
     private static int override(CommandContext<CommandSourceStack> ctx, int durationTicks)
             throws CommandSyntaxException {
         CommandSourceStack source = ctx.getSource();
-        ServerPlayer player = source.getPlayer();
-        boolean allowed = source.hasPermission(2) || (player != null && ForceReleasePermission.canForceRelease(player));
-        if (!allowed) {
-            source.sendFailure(Component.translatable(PREFIX + "override.no_permission"));
+        if (!requirePermission(source, ModPermission.OVERRIDE)) {
             return 0;
         }
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
@@ -143,6 +158,9 @@ public final class DispatchCommands {
 
     private static int route(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         CommandSourceStack source = ctx.getSource();
+        if (!requirePermission(source, ModPermission.DISPATCH)) {
+            return 0;
+        }
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
         if (!train.hasForwardConductor() && !train.hasBackwardConductor()) {
             throw NO_CONDUCTOR.create();
@@ -181,6 +199,80 @@ public final class DispatchCommands {
         return 1;
     }
 
+    private static boolean requirePermission(CommandSourceStack source, ModPermission permission) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null || PermissionManager.has(player, permission)) {
+            return true;
+        }
+        source.sendFailure(Component.translatable("create_trains_scheduling.network.no_permission",
+                permission.id()));
+        return false;
+    }
+
+    private static int changePermission(CommandContext<CommandSourceStack> ctx, boolean grant)
+            throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        String name = StringArgumentType.getString(ctx, "player");
+        String permissionId = StringArgumentType.getString(ctx, "permission");
+        ModPermission permission = ModPermission.byId(permissionId);
+        if (permission == null) {
+            throw new SimpleCommandExceptionType(
+                    Component.translatable(PREFIX + "perm.unknown", permissionId)).create();
+        }
+        UUID target = resolvePlayer(source, name);
+        if (target == null) {
+            throw new SimpleCommandExceptionType(
+                    Component.translatable(PREFIX + "perm.player_not_found", name)).create();
+        }
+        if (grant) {
+            PermissionManager.grant(source.getServer(), target, permission);
+        } else {
+            PermissionManager.revoke(source.getServer(), target, permission);
+        }
+        ServerPlayer online = source.getServer().getPlayerList().getPlayer(target);
+        if (online != null) {
+            DispatchNetwork.syncPermissions(online);
+        }
+        source.sendSuccess(() -> Component.translatable(PREFIX + (grant ? "perm.granted" : "perm.revoked"),
+                name, permission.id()), true);
+        return 1;
+    }
+
+    private static int listPermissions(CommandContext<CommandSourceStack> ctx, String name)
+            throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        if (name != null) {
+            UUID target = resolvePlayer(source, name);
+            if (target == null) {
+                throw new SimpleCommandExceptionType(
+                        Component.translatable(PREFIX + "perm.player_not_found", name)).create();
+            }
+            String joined = joinPermissions(PermissionManager.permissionsOf(source.getServer(), target));
+            source.sendSuccess(() -> Component.translatable(PREFIX + "perm.list.one", name, joined), false);
+            return 1;
+        }
+        var all = PermissionManager.data(source.getServer()).all();
+        source.sendSuccess(() -> Component.translatable(PREFIX + "perm.list.header", all.size()), false);
+        all.forEach((uuid, permissions) -> {
+            String joined = joinPermissions(permissions);
+            source.sendSuccess(() -> Component.literal(uuid + " -> " + joined), false);
+        });
+        return 1;
+    }
+
+    private static String joinPermissions(java.util.Set<ModPermission> permissions) {
+        return permissions.isEmpty() ? "-"
+                : permissions.stream().map(ModPermission::id).sorted().reduce((a, b) -> a + ", " + b).orElse("-");
+    }
+
+    private static UUID resolvePlayer(CommandSourceStack source, String name) {
+        ServerPlayer online = source.getServer().getPlayerList().getPlayerByName(name);
+        if (online != null) {
+            return online.getUUID();
+        }
+        return source.getServer().getProfileCache().get(name).map(com.mojang.authlib.GameProfile::getId).orElse(null);
+    }
+
     private static GlobalStation findStation(Train train, String name) {
         if (train.graph == null || name == null) {
             return null;
@@ -195,12 +287,13 @@ public final class DispatchCommands {
 
     private static int clear(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         CommandSourceStack source = ctx.getSource();
+        if (!requirePermission(source, ModPermission.SCHEDULE)) {
+            return 0;
+        }
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
-        train.runtime.discardSchedule();
-        OneOffScheduleTracker.markCleared(train);
-        source.sendSuccess(() -> Component.translatable(PREFIX + "clear.success",
-                train.name.getString()), true);
-        return 1;
+        DispatchService.Result result = DispatchService.setScheduleEnabled(train, false);
+        source.sendSuccess(result::message, true);
+        return result.success() ? 1 : 0;
     }
 
     private static Component overrideDescription(Train train) {

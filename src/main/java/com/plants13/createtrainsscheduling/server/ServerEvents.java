@@ -7,12 +7,15 @@ import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
 import com.plants13.createtrainsscheduling.compat.snr.SnrCompat;
 import com.plants13.createtrainsscheduling.dispatch.DirectDispatchTracker;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
+import com.plants13.createtrainsscheduling.network.DispatchNetwork;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * 服务端事件：注册命令、打印启动自检信息、驱动一次性路线的完成清理。
@@ -25,6 +28,13 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         DispatchCommands.register(event.getDispatcher());
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DispatchNetwork.syncPermissions(player);
+        }
     }
 
     @SubscribeEvent

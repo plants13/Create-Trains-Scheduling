@@ -22,6 +22,8 @@ repositories {
     // DragonLib 的传递依赖：Architectury API / ForgeConfigAPIPort
     maven { url = "https://maven.architectury.dev/" }
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
+    // JourneyMap API
+    maven { url = "https://maven.blamejared.com" }
 }
 
 base {
@@ -94,6 +96,9 @@ dependencies {
     // Create Railways Navigator (hard dependency) + its DragonLib dependency
     implementation("de.mrjulsen.mcdragonlib:dragonlib-neoforge:1.21.1-beta-3.0.28")
     implementation("maven.modrinth:create-railways-navigator:rlsRwxq3")
+
+    // 客户端软集成：JourneyMap API（不打包、不硬依赖）
+    compileOnly("info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1")
 
     // 注意：Xaero 集成不在编译期依赖 Xaero 的类（其 xaero.lib 是 jar-in-jar 嵌套 jar），
     // 而是用 mixin 的字符串 targets + 访问器接口，见 mixin/xaero 与 client/XaeroOverlay。

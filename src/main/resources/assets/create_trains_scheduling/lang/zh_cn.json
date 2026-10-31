@@ -37,7 +37,7 @@
   "create_trains_scheduling.menu.status.conductor": "可自动运行：%s",
   "create_trains_scheduling.menu.status.schedule": "有时刻表：%s",
   "create_trains_scheduling.menu.pick_hint": "点击地图上的车站作为目的地（Esc 取消）",
-  "create_trains_scheduling.network.no_permission": "你没有调度该列车的权限",
+  "create_trains_scheduling.network.no_permission": "你没有使用该功能的权限（缺少权限：%s）",
   "create_trains_scheduling.network.no_override_permission": "你没有强制放行权限",
   "create_trains_scheduling.network.train_not_found": "找不到该列车（可能已被移除）",
   "create_trains_scheduling.network.station_not_found": "找不到该车站",
@@ -49,4 +49,18 @@
   "create_trains_scheduling.menu.override.next_signal": "下一信号",
   "create_trains_scheduling.menu.override.timed": "剩余 %s 秒",
   "create_trains_scheduling.menu.override.none": "无"
+,
+  "create_trains_scheduling.dispatch.schedule.none": "该列车没有时刻表",
+  "create_trains_scheduling.dispatch.schedule.resumed": "时刻表已恢复",
+  "create_trains_scheduling.dispatch.schedule.disabled_auto": "时刻表已清除",
+  "create_trains_scheduling.dispatch.schedule.disabled_manual": "时刻表已打断并保留（手动放置的时刻表不会被销毁）",
+  "create_trains_scheduling.menu.disable_schedule": "禁用时刻表",
+  "create_trains_scheduling.menu.resume_schedule": "恢复时刻表",
+  "create_trains_scheduling.menu.status.paused": "（已暂停）",
+  "create_trains_scheduling.command.perm.unknown": "未知权限：%s（可用：dispatch、override、schedule）",
+  "create_trains_scheduling.command.perm.player_not_found": "找不到玩家：%s",
+  "create_trains_scheduling.command.perm.granted": "已授予 %s 权限给 %s",
+  "create_trains_scheduling.command.perm.revoked": "已剥夺 %s 的 %s 权限",
+  "create_trains_scheduling.command.perm.list.one": "%s 的权限：%s",
+  "create_trains_scheduling.command.perm.list.header": "被显式授权的玩家（%s）："
 }

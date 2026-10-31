@@ -3,21 +3,25 @@
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-brightgreen.svg)](LICENSE)
 
 A NeoForge 1.21.1 addon for [Create](https://github.com/Creators-of-Create/Create) that adds train
-dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map).
+dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map)
+and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
-Current version: **0.0.1-alpha**.
+Current version: **0.0.2-alpha**.
 
 ## Features
 
-- **Xaero world map overlay** — station markers and per-carriage train highlight
+- **Map overlay** (Xaero's World Map and JourneyMap) — station markers and per-carriage train highlight
 - **Click a train on the map** to open the dispatch menu:
   - **Set destination** — pick a station on the map; the destination is dispatched by station UUID,
     so duplicate station names can never send the train to the wrong station
   - **Allow passing next red signal** — event-based: the grant expires right after the train actually
     passes a signal
-  - **Show status** — server-authoritative state (can run automatically / has schedule / override state)
-  - **Clear schedule**
-- **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts selftest`
+  - **Show status** — server-authoritative state (can run automatically / has schedule / paused / override state)
+  - **Disable schedule** — manually placed schedules are only *interrupted* (paused and kept);
+    auto schedules created by this mod are cleared
+  - **Resume schedule** — continues an interrupted schedule
+- **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
+- **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts perm`, `/cts selftest`
 - **Languages** — English and 简体中文
 
 ## Requirements
@@ -29,28 +33,28 @@ Current version: **0.0.1-alpha**.
 | Create | 6.0.10 |
 | Create Railways Navigator | 0.10.0-C6+ (**hard dependency**) |
 | DragonLib | 3.0.28+ (dependency of CRN) |
-| Xaero's World Map | 1.21.1 (client only, optional but required for the map UI) |
+| Xaero's World Map **or** JourneyMap | 1.21.1, client only, optional (needed for the map UI) |
 | Java | 21 |
 
 ## Installation
 
-**Client** (needed for the map UI): Create, Create Railways Navigator, DragonLib, Xaero's World Map,
-NeoForge, and this mod.
+**Client** (needed for the map UI): Create, Create Railways Navigator, DragonLib, NeoForge, this mod,
+and either Xaero's World Map or JourneyMap.
 
 **Server**: Create, Create Railways Navigator, DragonLib, NeoForge, and this mod.
-Xaero's World Map is client-side and does not need to be installed on the server.
+The map mods are client-side and do not need to be installed on the server.
 
 ## Usage
 
 ### Map workflow
 
-1. Open Xaero's World Map.
+1. Open the fullscreen map (Xaero's World Map or JourneyMap).
 2. Left-click a train (hover first — all its carriages get a yellow highlight).
 3. Use the menu:
    - **Set destination…** → all stations get a yellow frame; click one to send the train there
    - **Allow passing next red signal** → grants a one-shot override
    - **Show status** → expands server-authoritative train state
-   - **Clear schedule**
+   - **Disable / resume schedule** → pauses and keeps manually placed schedules; clears auto schedules
 
 `Esc` or right-click closes the menu / cancels station picking.
 
@@ -62,11 +66,22 @@ Xaero's World Map is client-side and does not need to be installed on the server
 | `/cts stations` | List station names |
 | `/cts route <train> <station1,station2,...>` | Dispatch a one-off route |
 | `/cts override <train> [ticks]` | Allow passing a red signal (no ticks = next signal; ticks = timed) |
-| `/cts clear <train>` | Clear the train's schedule |
+| `/cts clear <train>` | Disable the train's schedule (manual schedules are kept) |
+| `/cts perm grant <player> <dispatch\|override\|schedule>` | OP only: grant a permission |
+| `/cts perm revoke <player> <permission>` | OP only: revoke a permission |
+| `/cts perm list [player]` | OP only: list granted permissions |
 | `/cts selftest` | Development self-test |
 
-Permissions: dispatching a destination requires OP or being the train owner; red-signal override
-requires OP or membership in `forceReleasePlayers` (config).
+### Permissions
+
+Normal players have **no** dispatch permissions by default. OPs always have all of them. OPs can grant
+the following per player (stored in the world save, survives restarts):
+
+- `dispatch` — set destinations / dispatch routes
+- `override` — allow passing red signals
+- `schedule` — disable / resume / clear schedules
+
+The legacy `forceReleasePlayers` config entry still counts as `override`.
 
 ## Building
 
@@ -74,14 +89,13 @@ requires OP or membership in `forceReleasePlayers` (config).
 ./gradlew build
 ```
 
-The jar is written to `build/libs/create_trains_scheduling-0.0.1-alpha.jar`.
+The jar is written to `build/libs/create_trains_scheduling-0.0.2-alpha.jar`.
 
 Development self-checks (`./gradlew runData`) verify the JSON ↔ Schedule round-trip and that all
 mixins apply.
 
 ## Known limitations (alpha)
 
-- Only Xaero's World Map is supported; JourneyMap is not integrated yet.
 - When a station name is duplicated on a train's track network, the destination falls back to exact
   navigation — Create/CRN schedule displays will not show that trip.
 - Alpha software: back up your worlds.

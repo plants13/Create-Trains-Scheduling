@@ -29,5 +29,10 @@ jar. No source code from them has been copied into this project.
   Proprietary, closed-source. Integrated at runtime only, via mixins into its map screen; no code
   copied and no classes bundled.
 
+- JourneyMap / JourneyMap API
+  https://www.curseforge.com/minecraft/mc-mods/journeymap
+  JourneyMap is proprietary. Its official addon API is used at compile time only (and as an optional
+  runtime soft dependency); no JourneyMap classes are bundled or copied.
+
 - ComputerCraft / CC:Tweaked
   Compute API planned for a future integration. Not currently used.

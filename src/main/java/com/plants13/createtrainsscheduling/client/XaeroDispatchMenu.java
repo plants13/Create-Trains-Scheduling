@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.UUID;
 
 import com.mojang.blaze3d.platform.Window;
-import com.plants13.createtrainsscheduling.network.ClearSchedulePayload;
 import com.plants13.createtrainsscheduling.network.GrantOverridePayload;
+import com.plants13.createtrainsscheduling.network.SetScheduleEnabledPayload;
 import com.plants13.createtrainsscheduling.network.TrainStatusPayload;
+import com.plants13.createtrainsscheduling.permissions.ModPermission;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.trains.entity.Train;
 
@@ -19,7 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * 列车调度右键菜单（屏幕空间绘制，不随地图缩放）。
+ * 列车调度菜单（屏幕空间绘制，不随地图缩放）。
  *
  * <p>状态机：
  * <ul>
@@ -27,6 +28,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
  *   <li>{@code OPEN} → 选"设定目的地" → {@code PICK_STATION}（点地图车站确认，Esc 取消）</li>
  *   <li>{@code PICK_STATION} → 取消/完成 → {@code CLOSED}</li>
  * </ul>
+ *
+ * <p>菜单项是否可用由服务端同步过来的权限（{@link PermissionCache}）与列车状态（{@link TrainStatusCache}）决定。
  */
 public final class XaeroDispatchMenu {
 
@@ -39,7 +42,7 @@ public final class XaeroDispatchMenu {
     private static final String PREFIX = "create_trains_scheduling.menu.";
     private static final int ITEM_HEIGHT = 13;
     private static final int PADDING = 5;
-    private static final int MIN_WIDTH = 170;
+    private static final int MIN_WIDTH = 190;
 
     private static State state = State.CLOSED;
     private static UUID trainId;
@@ -76,11 +79,11 @@ public final class XaeroDispatchMenu {
 
     public static void open(Train train, double mouseX, double mouseY) {
         state = State.OPEN;
-        TrainStatusCache.request(train.id);
         trainId = train.id;
         anchorX = mouseX;
         anchorY = mouseY;
         showDetails = false;
+        TrainStatusCache.request(train.id);
     }
 
     public static void close() {
@@ -94,7 +97,6 @@ public final class XaeroDispatchMenu {
         state = State.PICK_STATION;
     }
 
-    /** 供 overlay 在选站模式下调用：完成一次目的地设定。 */
     public static void finishStationPick() {
         close();
     }
@@ -112,7 +114,7 @@ public final class XaeroDispatchMenu {
             return true;
         }
         if (state == State.PICK_STATION) {
-            return false; // 交给 XaeroOverlay 处理选站
+            return false; // 交给共享叠加层处理选站
         }
         Train train = currentTrain();
         if (train == null) {
@@ -163,25 +165,28 @@ public final class XaeroDispatchMenu {
         int mouseXInt = (int) mouseX;
         int mouseYInt = (int) mouseY;
 
-        // 面板背景 + 边框
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xE0101010);
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF808080);
         graphics.fill(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight, 0xFF808080);
         graphics.fill(panelX, panelY, panelX + 1, panelY + panelHeight, 0xFF808080);
         graphics.fill(panelX + panelWidth - 1, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF808080);
 
-        // 标题
         graphics.drawString(mc.font, train.name == null ? train.id.toString() : train.name.getString(),
                 panelX + PADDING, panelY + PADDING, 0xFFFFD54F, true);
 
-        // 状态详情（可选）：显示服务端返回的权威状态
         if (showDetails) {
             TrainStatusPayload status = TrainStatusCache.get(trainId);
             int y = panelY + PADDING + ITEM_HEIGHT;
             y = drawLine(graphics, mc, Component.translatable(PREFIX + "status.conductor",
                     status == null ? unknown() : yesNo(status.canAutoRun())), y, 0xFFB0B0B0);
-            y = drawLine(graphics, mc, Component.translatable(PREFIX + "status.schedule",
-                    status == null ? unknown() : yesNo(status.hasSchedule())), y, 0xFFB0B0B0);
+            Component scheduleText = status == null ? unknown()
+                    : yesNo(status.hasSchedule());
+            if (status != null && status.paused()) {
+                scheduleText = scheduleText.copy()
+                        .append(Component.translatable(PREFIX + "status.paused"));
+            }
+            y = drawLine(graphics, mc, Component.translatable(PREFIX + "status.schedule", scheduleText),
+                    y, 0xFFB0B0B0);
             Component override;
             if (status == null) {
                 override = unknown();
@@ -195,7 +200,6 @@ public final class XaeroDispatchMenu {
             drawLine(graphics, mc, Component.translatable(PREFIX + "status.override", override), y, 0xFFB0B0B0);
         }
 
-        // 菜单项（悬停高亮 + 标签）
         List<Item> items = buildItems(train);
         for (int i = 0; i < HITS.size() && i < items.size(); i++) {
             Hit hit = HITS.get(i);
@@ -218,26 +222,36 @@ public final class XaeroDispatchMenu {
     private static List<Item> buildItems(Train train) {
         TrainStatusPayload status = TrainStatusCache.get(trainId);
         boolean canAutoRun = status == null || status.canAutoRun();
-        boolean hasSchedule = status == null || status.hasSchedule();
+        boolean hasSchedule = status != null && status.hasSchedule();
+        boolean paused = status != null && status.paused();
+
         List<Item> items = new ArrayList<>();
-        items.add(new Item(Component.translatable(PREFIX + "set_destination"), canAutoRun,
+        items.add(new Item(Component.translatable(PREFIX + "set_destination"),
+                PermissionCache.has(ModPermission.DISPATCH) && canAutoRun,
                 XaeroDispatchMenu::beginStationPick));
-        items.add(new Item(Component.translatable(PREFIX + "override_next_signal"), true, () -> {
-            PacketDistributor.sendToServer(new GrantOverridePayload(train.id));
-            close();
-        }));
+        items.add(new Item(Component.translatable(PREFIX + "override_next_signal"),
+                PermissionCache.has(ModPermission.OVERRIDE), () -> {
+                    PacketDistributor.sendToServer(new GrantOverridePayload(train.id));
+                    close();
+                }));
         items.add(new Item(Component.translatable(PREFIX + (showDetails ? "details_hide" : "details_show")), true,
                 () -> showDetails = !showDetails));
-        items.add(new Item(Component.translatable(PREFIX + "clear_schedule"), hasSchedule, () -> {
-            PacketDistributor.sendToServer(new ClearSchedulePayload(train.id));
-            close();
-        }));
+        if (hasSchedule) {
+            boolean canSchedule = PermissionCache.has(ModPermission.SCHEDULE);
+            if (paused) {
+                items.add(new Item(Component.translatable(PREFIX + "resume_schedule"), canSchedule, () -> {
+                    PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, true));
+                    close();
+                }));
+            } else {
+                items.add(new Item(Component.translatable(PREFIX + "disable_schedule"), canSchedule, () -> {
+                    PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, false));
+                    close();
+                }));
+            }
+        }
         items.add(new Item(Component.translatable(PREFIX + "close"), true, XaeroDispatchMenu::close));
         return items;
-    }
-
-    private static Component unknown() {
-        return Component.translatable(PREFIX + "status.unknown");
     }
 
     private static void layout(Train train) {
@@ -279,5 +293,9 @@ public final class XaeroDispatchMenu {
 
     private static Component yesNo(boolean value) {
         return Component.translatable("create_trains_scheduling.command." + (value ? "yes" : "no"));
+    }
+
+    private static Component unknown() {
+        return Component.translatable(PREFIX + "status.unknown");
     }
 }

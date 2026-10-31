@@ -47,9 +47,16 @@ config="create_trains_scheduling.mixins.json"
 [[mixins]]
 config="create_trains_scheduling.xaero.mixins.json"
 
-# 可选客户端集成：Xaero 世界地图（未安装时整个叠加层不加载）
+# 可选客户端集成：Xaero 世界地图 / JourneyMap（未安装时对应叠加层不加载）
 [[dependencies.${mod_id}]]
 modId="xaeroworldmap"
+type="optional"
+versionRange="[1,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.${mod_id}]]
+modId="journeymap"
 type="optional"
 versionRange="[1,)"
 ordering="NONE"

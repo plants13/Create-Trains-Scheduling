@@ -86,6 +86,35 @@ public final class DispatchService {
                 Component.translatable(PREFIX + "destination.exact", target.name));
     }
 
+    /**
+     * 禁用 / 恢复时刻表。
+     *
+     * <p>关键区别：<b>手动放置</b>的时刻表（{@code isAutoSchedule == false}）只能"打断"——
+     * 取消导航并暂停，时刻表本身保留，之后可以恢复；只有自动/本 mod 下发的时刻表才真正清除。
+     * 否则手动时刻表会连同物品一起丢失。
+     */
+    public static Result setScheduleEnabled(Train train, boolean enabled) {
+        if (train == null || train.runtime.getSchedule() == null) {
+            return Result.fail(Component.translatable(PREFIX + "schedule.none"));
+        }
+        if (enabled) {
+            train.runtime.paused = false;
+            return Result.ok(Mode.NATIVE, Component.translatable(PREFIX + "schedule.resumed"));
+        }
+        if (train.runtime.isAutoSchedule) {
+            train.runtime.discardSchedule();
+            OneOffScheduleTracker.markCleared(train);
+            DirectDispatchTracker.markCleared(train);
+            return Result.ok(Mode.NATIVE, Component.translatable(PREFIX + "schedule.disabled_auto"));
+        }
+
+        // 手动时刻表：打断但保留
+        train.navigation.cancelNavigation();
+        train.runtime.paused = true;
+        DirectDispatchTracker.markCleared(train);
+        return Result.ok(Mode.NATIVE, Component.translatable(PREFIX + "schedule.disabled_manual"));
+    }
+
     /** 站名是否在该列车的轨道网络上不唯一（或不适合按名字匹配）。 */
     public static boolean isAmbiguous(Train train, String name) {
         if (name == null || name.isBlank()) {

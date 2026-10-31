@@ -37,7 +37,7 @@
   "create_trains_scheduling.menu.status.conductor": "Can run automatically: %s",
   "create_trains_scheduling.menu.status.schedule": "Has schedule: %s",
   "create_trains_scheduling.menu.pick_hint": "Click a station on the map to set it as the destination (Esc to cancel)",
-  "create_trains_scheduling.network.no_permission": "You are not allowed to dispatch this train",
+  "create_trains_scheduling.network.no_permission": "You are not allowed to use this feature (missing permission: %s)",
   "create_trains_scheduling.network.no_override_permission": "You are not allowed to force-release trains",
   "create_trains_scheduling.network.train_not_found": "Train not found (it may have been removed)",
   "create_trains_scheduling.network.station_not_found": "Station not found",
@@ -49,4 +49,18 @@
   "create_trains_scheduling.menu.override.next_signal": "next signal",
   "create_trains_scheduling.menu.override.timed": "%ss left",
   "create_trains_scheduling.menu.override.none": "none"
+,
+  "create_trains_scheduling.dispatch.schedule.none": "This train has no schedule",
+  "create_trains_scheduling.dispatch.schedule.resumed": "Schedule resumed",
+  "create_trains_scheduling.dispatch.schedule.disabled_auto": "Schedule cleared",
+  "create_trains_scheduling.dispatch.schedule.disabled_manual": "Schedule interrupted and kept (manually placed schedule is not destroyed)",
+  "create_trains_scheduling.menu.disable_schedule": "Disable schedule",
+  "create_trains_scheduling.menu.resume_schedule": "Resume schedule",
+  "create_trains_scheduling.menu.status.paused": " (paused)",
+  "create_trains_scheduling.command.perm.unknown": "Unknown permission: %s (available: dispatch, override, schedule)",
+  "create_trains_scheduling.command.perm.player_not_found": "Unknown player: %s",
+  "create_trains_scheduling.command.perm.granted": "Granted %s to %s",
+  "create_trains_scheduling.command.perm.revoked": "Revoked %s from %s",
+  "create_trains_scheduling.command.perm.list.one": "Permissions of %s: %s",
+  "create_trains_scheduling.command.perm.list.header": "Players with explicit permissions (%s):"
 }
