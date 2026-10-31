@@ -37,24 +37,6 @@ Run the game in a development environment:
 ./gradlew runData
 ```
 
-## Machine-local proxy setup (NOT committed)
-
-Some networks cannot reach `maven.neoforged.net` directly (DNS is poisoned). Do **not** put proxy
-settings in this repository's `gradle.properties` — GitHub Actions would pick them up and fail,
-because the runner has no local proxy.
-
-Put them in your user-level Gradle properties instead (`~/.gradle/gradle.properties`):
-
-```properties
-systemProp.http.proxyHost=<redacted>
-systemProp.http.proxyPort=<redacted>
-systemProp.https.proxyHost=<redacted>
-systemProp.https.proxyPort=<redacted>
-```
-
-If the Gradle wrapper itself has to download a distribution, export `GRADLE_OPTS` with the same
-`-D` proxy flags before running `./gradlew`.
-
 ## Dependency repositories
 
 * Create / Ponder / Flywheel — <https://maven.createmod.net>
