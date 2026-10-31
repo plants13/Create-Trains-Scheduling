@@ -13,6 +13,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
+import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.plants13.createtrainsscheduling.schedule.RouteBuilder;
 import com.plants13.createtrainsscheduling.schedule.ScheduleSelfTest;
@@ -149,6 +150,7 @@ public final class DispatchCommands {
         }
         Schedule schedule = RouteBuilder.oneOff(source.getServer().registryAccess(), stations);
         train.runtime.setSchedule(schedule, true);
+        OneOffScheduleTracker.markDispatched(train);
         source.sendSuccess(() -> Component.translatable(PREFIX + "route.success",
                 train.name.getString(), String.join(" -> ", stations)), true);
         return 1;
@@ -158,6 +160,7 @@ public final class DispatchCommands {
         CommandSourceStack source = ctx.getSource();
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
         train.runtime.discardSchedule();
+        OneOffScheduleTracker.markCleared(train);
         source.sendSuccess(() -> Component.translatable(PREFIX + "clear.success",
                 train.name.getString()), true);
         return 1;
