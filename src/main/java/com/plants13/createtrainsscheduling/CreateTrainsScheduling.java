@@ -46,6 +46,7 @@ public class CreateTrainsScheduling {
     private void runStartupSelfChecks() {
         if (Boolean.getBoolean("cts.verifyMixin")) {
             for (String className : new String[] {
+                    "com.simibubi.create.content.trains.entity.Train",
                     "com.simibubi.create.content.trains.entity.Navigation",
                     "com.simibubi.create.content.trains.signal.SignalBoundary",
                     "com.simibubi.create.content.trains.signal.SignalEdgeGroup"}) {

@@ -6,7 +6,8 @@
   "mixins": [
     "NavigationTickMixin",
     "SignalEdgeGroupMixin",
-    "SignalBoundaryMixin"
+    "SignalBoundaryMixin",
+    "TrainSignalPassMixin"
   ],
   "client": [],
   "server": [],

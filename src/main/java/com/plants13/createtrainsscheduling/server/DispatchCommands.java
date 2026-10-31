@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -30,16 +31,18 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * 开发/调度用命令：{@code /cts ...}
  *
- * <p>目前是 v1 功能的命令行入口，正式 UI（GUI/Web）后续接在同一批服务之上。
+ * <p>所有面向玩家的文本都走语言文件（{@code lang/en_us.json}、{@code lang/zh_cn.json}）。
  */
 public final class DispatchCommands {
 
+    private static final String PREFIX = "create_trains_scheduling.command.";
+
     private static final SimpleCommandExceptionType TRAIN_NOT_FOUND =
-            new SimpleCommandExceptionType(Component.literal("找不到该名称的列车"));
+            new SimpleCommandExceptionType(Component.translatable(PREFIX + "train_not_found"));
     private static final SimpleCommandExceptionType NO_CONDUCTOR =
-            new SimpleCommandExceptionType(Component.literal("该列车无法自动运行（需要烈焰人燃烧室或坐垫上的非玩家生物）"));
+            new SimpleCommandExceptionType(Component.translatable(PREFIX + "route.no_conductor"));
     private static final SimpleCommandExceptionType NO_STATIONS =
-            new SimpleCommandExceptionType(Component.literal("没有有效车站"));
+            new SimpleCommandExceptionType(Component.translatable(PREFIX + "route.no_stations"));
 
     private DispatchCommands() {}
 
@@ -53,7 +56,12 @@ public final class DispatchCommands {
                         .executes(DispatchCommands::listStations))
                 .then(Commands.literal("override")
                         .then(Commands.argument("train", StringArgumentType.string())
-                                .executes(ctx -> override(ctx, SignalOverrideManager.DEFAULT_DURATION_TICKS))))
+                                // 默认：事件制（通过下一个信号后立即失效）
+                                .executes(ctx -> override(ctx, 0))
+                                // 也可指定 ticks，改为时间制
+                                .then(Commands.argument("ticks", IntegerArgumentType.integer(1, 72000))
+                                        .executes(ctx -> override(ctx,
+                                                IntegerArgumentType.getInteger(ctx, "ticks"))))))
                 .then(Commands.literal("route")
                         .then(Commands.argument("train", StringArgumentType.string())
                                 .then(Commands.argument("stations", StringArgumentType.greedyString())
@@ -66,25 +74,28 @@ public final class DispatchCommands {
     private static int selftest(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         ScheduleSelfTest.run(source.getServer().registryAccess());
-        source.sendSuccess(() -> Component.literal("JSON <-> Schedule 往返自检已执行，结果见日志"), true);
+        source.sendSuccess(() -> Component.translatable(PREFIX + "selftest.done"), true);
         return 1;
     }
 
     private static int listTrains(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         if (Create.RAILWAYS.trains.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("当前没有列车"), false);
+            source.sendSuccess(() -> Component.translatable(PREFIX + "trains.empty"), false);
             return 0;
         }
-        source.sendSuccess(() -> Component.literal("列车列表（" + Create.RAILWAYS.trains.size() + "）："), false);
+        source.sendSuccess(() -> Component.translatable(PREFIX + "trains.header",
+                Create.RAILWAYS.trains.size()), false);
         for (Train train : Create.RAILWAYS.trains.values()) {
             String name = train.name == null ? train.id.toString() : train.name.getString();
             boolean conductor = train.hasForwardConductor() || train.hasBackwardConductor();
             boolean hasSchedule = train.runtime.getSchedule() != null;
-            String line = String.format(" - %s | 可自动运行=%s | 有时刻表=%s | 授权剩余=%ss",
-                    name, conductor ? "是" : "否", hasSchedule ? "是" : "否",
-                    SignalOverrideManager.remaining(train) / 20);
-            source.sendSuccess(() -> Component.literal(line), false);
+            Component overrideDesc = overrideDescription(train);
+            source.sendSuccess(() -> Component.translatable(PREFIX + "trains.entry",
+                    name,
+                    yesNo(conductor),
+                    yesNo(hasSchedule),
+                    overrideDesc), false);
         }
         return 1;
     }
@@ -99,24 +110,30 @@ public final class DispatchCommands {
                 }
             }
         }
-        source.sendSuccess(() -> Component.literal("车站（" + names.size() + "）：" + names), false);
+        String joined = names.toString();
+        source.sendSuccess(() -> Component.translatable(PREFIX + "stations", names.size(), joined), false);
         return 1;
     }
 
-    private static int override(CommandContext<CommandSourceStack> ctx, long durationTicks)
+    private static int override(CommandContext<CommandSourceStack> ctx, int durationTicks)
             throws CommandSyntaxException {
         CommandSourceStack source = ctx.getSource();
         ServerPlayer player = source.getPlayer();
         boolean allowed = source.hasPermission(2) || (player != null && ForceReleasePermission.canForceRelease(player));
         if (!allowed) {
-            source.sendFailure(Component.literal("你没有强制放行权限（需要 OP 或被加入 forceReleasePlayers 授权组）"));
+            source.sendFailure(Component.translatable(PREFIX + "override.no_permission"));
             return 0;
         }
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
-        SignalOverrideManager.grant(train, durationTicks);
-        source.sendSuccess(() -> Component.literal(String.format(
-                "已授权列车 %s 越过前方红灯（%d 秒）",
-                train.name.getString(), durationTicks / 20)), true);
+        if (durationTicks <= 0) {
+            SignalOverrideManager.grantNextSignal(train);
+            source.sendSuccess(() -> Component.translatable(PREFIX + "override.success.next_signal",
+                    train.name.getString()), true);
+        } else {
+            SignalOverrideManager.grantTimed(train, durationTicks);
+            source.sendSuccess(() -> Component.translatable(PREFIX + "override.success.timed",
+                    train.name.getString(), durationTicks, durationTicks / 20.0), true);
+        }
         return 1;
     }
 
@@ -132,8 +149,8 @@ public final class DispatchCommands {
         }
         Schedule schedule = RouteBuilder.oneOff(source.getServer().registryAccess(), stations);
         train.runtime.setSchedule(schedule, true);
-        source.sendSuccess(() -> Component.literal(String.format(
-                "已向列车 %s 下发一次性路线：%s", train.name.getString(), String.join(" -> ", stations))), true);
+        source.sendSuccess(() -> Component.translatable(PREFIX + "route.success",
+                train.name.getString(), String.join(" -> ", stations)), true);
         return 1;
     }
 
@@ -141,8 +158,24 @@ public final class DispatchCommands {
         CommandSourceStack source = ctx.getSource();
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
         train.runtime.discardSchedule();
-        source.sendSuccess(() -> Component.literal("已清除列车 " + train.name.getString() + " 的时刻表"), true);
+        source.sendSuccess(() -> Component.translatable(PREFIX + "clear.success",
+                train.name.getString()), true);
         return 1;
+    }
+
+    private static Component overrideDescription(Train train) {
+        if (SignalOverrideManager.hasNextSignalGrant(train)) {
+            return Component.translatable(PREFIX + "override.mode.next_signal");
+        }
+        long remaining = SignalOverrideManager.remaining(train);
+        if (remaining > 0L) {
+            return Component.translatable(PREFIX + "override.mode.timed", remaining / 20.0);
+        }
+        return Component.translatable(PREFIX + "override.mode.none");
+    }
+
+    private static Component yesNo(boolean value) {
+        return Component.translatable(PREFIX + (value ? "yes" : "no"));
     }
 
     private static List<String> parseStations(String spec) {

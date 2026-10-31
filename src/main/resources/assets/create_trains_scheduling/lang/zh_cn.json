@@ -1,0 +1,21 @@
+{
+  "itemGroup.create_trains_scheduling": "机械动力：列车调度",
+  "create_trains_scheduling.command.yes": "是",
+  "create_trains_scheduling.command.no": "否",
+  "create_trains_scheduling.command.train_not_found": "找不到该名称的列车",
+  "create_trains_scheduling.command.selftest.done": "JSON <-> Schedule 往返自检已执行，结果见日志",
+  "create_trains_scheduling.command.trains.empty": "当前世界没有列车",
+  "create_trains_scheduling.command.trains.header": "列车（%s）：",
+  "create_trains_scheduling.command.trains.entry": " - %s | 可自动运行=%s | 有时刻表=%s | 授权=%s",
+  "create_trains_scheduling.command.stations": "车站（%s）：%s",
+  "create_trains_scheduling.command.override.no_permission": "你没有强制放行权限（需要 OP 或被加入 forceReleasePlayers 授权组）",
+  "create_trains_scheduling.command.override.success.next_signal": "已授权列车 %s 越过下一个红灯（通过后立即失效）",
+  "create_trains_scheduling.command.override.success.timed": "已授权列车 %s 越过前方红灯（%s ticks / %s 秒）",
+  "create_trains_scheduling.command.override.mode.next_signal": "下一信号",
+  "create_trains_scheduling.command.override.mode.timed": "剩余 %s 秒",
+  "create_trains_scheduling.command.override.mode.none": "无",
+  "create_trains_scheduling.command.route.no_conductor": "该列车无法自动运行（需要烈焰人燃烧室或坐垫上的非玩家生物）",
+  "create_trains_scheduling.command.route.no_stations": "没有有效车站",
+  "create_trains_scheduling.command.route.success": "已向列车 %s 下发一次性路线：%s",
+  "create_trains_scheduling.command.clear.success": "已清除列车 %s 的时刻表"
+}

@@ -23,5 +23,23 @@ public class Config {
             .comment("Players (name or UUID) allowed to force-release a train through a red signal. OPs always can.")
             .defineListAllowEmpty("forceReleasePlayers", List.of(), () -> "", o -> o instanceof String);
 
+    /**
+     * 越红灯授权的默认时长（tick）。
+     *
+     * <p>命令可以用 {@code /cts override <train> <ticks>} 单次覆盖，例如 {@code 10} 表示只放行 0.5 秒。
+     */
+    public static final ModConfigSpec.IntValue FORCE_RELEASE_DURATION_TICKS = BUILDER
+            .comment("Default duration (ticks) of a red-signal override grant. Overridable per command: /cts override <train> <ticks>")
+            .defineInRange("forceReleaseDurationTicks", 1200, 1, 72000);
+
     static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** 读取默认授权时长，配置不可用时退回 1200 ticks。 */
+    public static int forceReleaseDurationTicks() {
+        try {
+            return FORCE_RELEASE_DURATION_TICKS.get();
+        } catch (IllegalStateException ignored) {
+            return 1200;
+        }
+    }
 }

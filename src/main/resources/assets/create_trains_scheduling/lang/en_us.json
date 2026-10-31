@@ -1,3 +1,21 @@
 {
-  "itemGroup.create_trains_scheduling": "Create: Trains Scheduling"
+  "itemGroup.create_trains_scheduling": "Create: Trains Scheduling",
+  "create_trains_scheduling.command.yes": "yes",
+  "create_trains_scheduling.command.no": "no",
+  "create_trains_scheduling.command.train_not_found": "No train with that name",
+  "create_trains_scheduling.command.selftest.done": "JSON <-> Schedule round-trip self-test executed, see the log",
+  "create_trains_scheduling.command.trains.empty": "There are no trains in this world",
+  "create_trains_scheduling.command.trains.header": "Trains (%s):",
+  "create_trains_scheduling.command.trains.entry": " - %s | auto=%s | schedule=%s | override=%s",
+  "create_trains_scheduling.command.stations": "Stations (%s): %s",
+  "create_trains_scheduling.command.override.no_permission": "You are not allowed to force-release (requires OP or membership in forceReleasePlayers)",
+  "create_trains_scheduling.command.override.success.next_signal": "Granted train %s permission to pass the next red signal (expires right after it passes)",
+  "create_trains_scheduling.command.override.success.timed": "Granted train %s permission to pass red signals (%s ticks / %s s)",
+  "create_trains_scheduling.command.override.mode.next_signal": "next signal",
+  "create_trains_scheduling.command.override.mode.timed": "%ss left",
+  "create_trains_scheduling.command.override.mode.none": "none",
+  "create_trains_scheduling.command.route.no_conductor": "This train cannot run automatically (it needs a lit blaze burner or a non-player mob on a conductor seat)",
+  "create_trains_scheduling.command.route.no_stations": "No valid stations given",
+  "create_trains_scheduling.command.route.success": "Dispatched a one-off route to train %s: %s",
+  "create_trains_scheduling.command.clear.success": "Cleared the schedule of train %s"
 }
