@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.plants13.createtrainsscheduling.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "NavigationTickMixin",
+    "SignalEdgeGroupMixin",
+    "SignalBoundaryMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
