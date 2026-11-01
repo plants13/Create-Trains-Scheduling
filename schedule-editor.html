@@ -194,6 +194,51 @@ const I18N = {
     'crn.none': '（无）',
     'crn.unknown': '未知 id',
     'crn.loadCatalog': '加载目录（/cts getcrn）后可在这里用下拉框选择线路/种类；当前先显示原始字段。',
+    'fld.value': '数值',
+    'fld.unit': '时间单位',
+    'fld.min': '最小时间（按上方单位）',
+    'fld.operator': '比较方式',
+    'fld.threshold': '阈值',
+    'fld.count': '玩家数量',
+    'fld.exact': '判定',
+    'fld.hour': '小时（0-23）',
+    'fld.minute': '分钟（0-59）',
+    'fld.rotation': '周期索引（0-5）',
+    'unit.ticks': 'tick',
+    'unit.seconds': '秒',
+    'unit.minutes': '分钟',
+    'op.greater': '大于（>）',
+    'op.less': '小于（<）',
+    'op.equal': '等于（=）',
+    'exact.exactly': '恰好',
+    'exact.orAbove': '至少',
+    'cond.createrailwaysnavigator:dynamic_delay': 'CRN 动态延迟',
+    'cond.createaddition:energy_threshold': '能量阈值',
+    'cond.railways:loaded': '车站已加载（SnR）',
+    'crn.sep.section': 'CRN 列车分离条件（train_separation）',
+    'crn.sep.filter': '列车过滤：',
+    'crn.sep.filter.any': '任意列车',
+    'crn.sep.filter.same_line': '同线路',
+    'crn.sep.filter.same_category': '同种类',
+    'crn.sep.filter.same_name': '同名列车',
+    'crn.sep.timeSource': '时间基准：',
+    'crn.sep.real': '现实时间',
+    'crn.sep.game': '游戏时间',
+    'crn.sep.ticks': '分离间隔（tick）：',
+    'crn.sep.station': '自定义车站过滤（留空 = 按目的地）：',
+    'crn.sep.legacy': '旧字段 Value/TimeUnit 已被 Ticks 取代，仅当缺少 Ticks 时生效。',
+    'cond.create:delay': '延迟',
+    'cond.create:item_threshold': '物品数量',
+    'cond.create:fluid_threshold': '流体数量',
+    'cond.create:idle': '空闲',
+    'cond.create:time_of_day': '一天中的时间',
+    'cond.create:player_count': '玩家数量',
+    'cond.create:redstone_link': '红石链接',
+    'cond.create:unloaded': '车站无人',
+    'cond.create:powered': '车站供电',
+    'cond.createrailwaysnavigator:train_separation': 'CRN 列车分离',
+
+
     'instr.create:destination': '目的地',
     'instr.create:rename': '改名',
     'instr.create:throttle': '限速',
@@ -201,7 +246,8 @@ const I18N = {
     'instr.create:package_delivery': '送包裹',
     'instr.railways:waypoint_destination': '途经点',
     'instr.createrailwaysnavigator:travel_section': 'CRN 交路区间'
-  },  en: {
+  },
+  en: {
     'title': 'Create: Trains Scheduling — Schedule Editor',
     'subtitle': 'Local single-file tool: no network access, no pasted content is ever executed. Flow: /cts getcrn copies the catalog, /cts getsch copies the schedule -> import here -> edit -> copy the JSON -> /cts writesch in game.',
     'lang.button': '中文',
@@ -292,6 +338,51 @@ const I18N = {
     'crn.none': '(none)',
     'crn.unknown': 'Unknown id',
     'crn.loadCatalog': 'Load the catalog (/cts getcrn) to pick lines/categories with dropdowns; raw fields are shown for now.',
+    'fld.value': 'Value',
+    'fld.unit': 'Time unit',
+    'fld.min': 'Minimum (in the unit above)',
+    'fld.operator': 'Operator',
+    'fld.threshold': 'Threshold',
+    'fld.count': 'Player count',
+    'fld.exact': 'Condition',
+    'fld.hour': 'Hour (0-23)',
+    'fld.minute': 'Minute (0-59)',
+    'fld.rotation': 'Rotation index (0-5)',
+    'unit.ticks': 'ticks',
+    'unit.seconds': 'seconds',
+    'unit.minutes': 'minutes',
+    'op.greater': 'Greater than (>)',
+    'op.less': 'Less than (<)',
+    'op.equal': 'Equal (=)',
+    'exact.exactly': 'Exactly',
+    'exact.orAbove': 'At least',
+    'cond.createrailwaysnavigator:dynamic_delay': 'CRN dynamic delay',
+    'cond.createaddition:energy_threshold': 'Energy threshold',
+    'cond.railways:loaded': 'Station loaded (SnR)',
+    'crn.sep.section': 'CRN train separation condition (train_separation)',
+    'crn.sep.filter': 'Train filter:',
+    'crn.sep.filter.any': 'Any train',
+    'crn.sep.filter.same_line': 'Same line',
+    'crn.sep.filter.same_category': 'Same category',
+    'crn.sep.filter.same_name': 'Same name',
+    'crn.sep.timeSource': 'Time source:',
+    'crn.sep.real': 'Real time',
+    'crn.sep.game': 'In-game time',
+    'crn.sep.ticks': 'Separation (ticks):',
+    'crn.sep.station': 'Custom station filter (empty = destination):',
+    'crn.sep.legacy': 'Legacy Value/TimeUnit are superseded by Ticks and only used when Ticks is missing.',
+    'cond.create:delay': 'Delay',
+    'cond.create:item_threshold': 'Item threshold',
+    'cond.create:fluid_threshold': 'Fluid threshold',
+    'cond.create:idle': 'Idle',
+    'cond.create:time_of_day': 'Time of day',
+    'cond.create:player_count': 'Player count',
+    'cond.create:redstone_link': 'Redstone link',
+    'cond.create:unloaded': 'Station unloaded',
+    'cond.create:powered': 'Station powered',
+    'cond.createrailwaysnavigator:train_separation': 'CRN train separation',
+
+
     'instr.create:destination': 'Destination',
     'instr.create:rename': 'Rename',
     'instr.create:throttle': 'Throttle',
@@ -513,6 +604,135 @@ function renderCrnSection(entry, data) {
   box.appendChild(prevRow);
 
   return box;
+}
+
+// ---------------------------------------------------------------------------
+// friendly condition editors
+// ---------------------------------------------------------------------------
+
+const SEP_SKIP_KEYS = ['TrainFilter', 'Ticks', 'TimeSource', 'StationFilter', 'Value', 'TimeUnit'];
+
+function conditionLabel(id) {
+  const key = 'cond.' + id;
+  const table = I18N[lang] || I18N.en;
+  if (table[key] != null) return table[key];
+  if (I18N.en[key] != null) return I18N.en[key];
+  return id;
+}
+
+function condInt(data, key, fallback) {
+  const node = data && data.v ? data.v[key] : null;
+  return node && (node.t === 'int' || node.t === 'byte' || node.t === 'short') ? Number(node.v) : fallback;
+}
+
+function condStr(data, key, fallback) {
+  const node = data && data.v ? data.v[key] : null;
+  return node && node.t === 'string' ? String(node.v) : fallback;
+}
+
+function putInt(data, key, value) { data.v[key] = { t: 'int', v: Math.trunc(Number(value) || 0) }; }
+function putStr(data, key, value) { data.v[key] = { t: 'string', v: String(value == null ? '' : value) }; }
+function putByte(data, key, value) { data.v[key] = { t: 'byte', v: value ? 1 : 0 }; }
+
+function condRow(box, labelText, control) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const label = document.createElement('span');
+  label.className = 'muted small';
+  label.textContent = labelText;
+  row.appendChild(label);
+  row.appendChild(control);
+  box.appendChild(row);
+  return row;
+}
+
+function condInput(box, labelText, value, onChange) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.style.width = '120px';
+  input.value = String(value);
+  input.onchange = () => onChange(input.value);
+  condRow(box, labelText, input);
+  return input;
+}
+
+function condSelect(box, labelText, options, current, onChange) {
+  const sel = document.createElement('select');
+  for (const pair of options) {
+    const opt = document.createElement('option');
+    opt.value = String(pair[0]);
+    opt.textContent = pair[1];
+    if (Number(pair[0]) === Number(current)) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  sel.onchange = () => onChange(Number(sel.value));
+  condRow(box, labelText, sel);
+  return sel;
+}
+
+function condBox() {
+  const box = document.createElement('div');
+  box.className = 'col';
+  return box;
+}
+
+function renderTimedWait(data, withMin) {
+  const box = condBox();
+  condInput(box, t('fld.value'), condInt(data, 'Value', 5), (v) => { putInt(data, 'Value', v); renderAll(); });
+  condSelect(box, t('fld.unit'), [[0, t('unit.ticks')], [1, t('unit.seconds')], [2, t('unit.minutes')]],
+    condInt(data, 'TimeUnit', 1), (v) => { putInt(data, 'TimeUnit', v); renderAll(); });
+  if (withMin) {
+    condInput(box, t('fld.min'), condInt(data, 'Min', 5), (v) => { putInt(data, 'Min', v); renderAll(); });
+  }
+  return { element: box, skip: withMin ? ['Value', 'TimeUnit', 'Min'] : ['Value', 'TimeUnit'] };
+}
+
+function renderCargoThreshold(data) {
+  const box = condBox();
+  condSelect(box, t('fld.operator'), [[0, t('op.greater')], [1, t('op.less')], [2, t('op.equal')]],
+    condInt(data, 'Operator', 0), (v) => { putInt(data, 'Operator', v); renderAll(); });
+  condInput(box, t('fld.threshold'), condStr(data, 'Threshold', '10'), (v) => { putStr(data, 'Threshold', v); renderAll(); });
+  return { element: box, skip: ['Operator', 'Threshold'] };
+}
+
+function renderPlayerCount(data) {
+  const box = condBox();
+  condInput(box, t('fld.count'), condInt(data, 'Count', 1), (v) => { putInt(data, 'Count', v); renderAll(); });
+  condSelect(box, t('fld.exact'), [[0, t('exact.exactly')], [1, t('exact.orAbove')]],
+    condInt(data, 'Exact', 0), (v) => { putInt(data, 'Exact', v); renderAll(); });
+  return { element: box, skip: ['Count', 'Exact'] };
+}
+
+function renderTimeOfDay(data) {
+  const box = condBox();
+  condInput(box, t('fld.hour'), condInt(data, 'Hour', 8), (v) => { putInt(data, 'Hour', v); renderAll(); });
+  condInput(box, t('fld.minute'), condInt(data, 'Minute', 0), (v) => { putInt(data, 'Minute', v); renderAll(); });
+  condInput(box, t('fld.rotation'), condInt(data, 'Rotation', 0), (v) => { putInt(data, 'Rotation', v); renderAll(); });
+  return { element: box, skip: ['Hour', 'Minute', 'Rotation'] };
+}
+
+function renderConditionFriendly(id, data) {
+  if (!data || data.t !== 'compound') return null;
+  switch (id) {
+    case 'create:delay':
+    case 'create:idle':
+      return renderTimedWait(data, false);
+    case 'createrailwaysnavigator:dynamic_delay':
+      return renderTimedWait(data, true);
+    case 'create:item_threshold':
+    case 'create:fluid_threshold':
+    case 'createaddition:energy_threshold':
+      return renderCargoThreshold(data);
+    case 'create:player_count':
+      return renderPlayerCount(data);
+    case 'create:time_of_day':
+      return renderTimeOfDay(data);
+    case 'createrailwaysnavigator:train_separation':
+      if (!data.v.Ticks) return null;
+      return { element: renderTrainSeparationSection(data), skip: SEP_SKIP_KEYS };
+    default:
+      return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -942,20 +1162,22 @@ function renderConditionColumn(entry, column, entryIndex, colIndex) {
     row.appendChild(makeSelect(conditionOptions(strValue(condition.v.Id)), strValue(condition.v.Id), (value) => {
       condition.v.Id = N.string(value);
       renderAll();
-    }));
+    }, conditionLabel));
     row.appendChild(makeButton(t('btn.delCondition'), 'danger', () => {
       column.v.splice(condIndex, 1);
       renderAll();
     }));
     wrap.appendChild(row);
-    wrap.appendChild(renderDataTable(condition.v.Data, true));
+    const friendlyCond = renderConditionFriendly(strValue(condition.v.Id), condition.v.Data);
+    if (friendlyCond) wrap.appendChild(friendlyCond.element);
+    wrap.appendChild(renderDataTable(condition.v.Data, true, friendlyCond ? friendlyCond.skip : null));
     col.appendChild(wrap);
   });
 
   const addRow = document.createElement('div');
   addRow.className = 'row';
   let newId = (state.catalog ? state.catalog.conditions[0] : 'create:delay') || 'create:delay';
-  addRow.appendChild(makeSelect(conditionOptions(newId), newId, (value) => { newId = value; }));
+  addRow.appendChild(makeSelect(conditionOptions(newId), newId, (value) => { newId = value; }, conditionLabel));
   addRow.appendChild(makeButton(t('btn.addCondition'), '', () => {
     column.v.push(N.compound({ Id: N.string(newId), Data: N.compound() }));
     renderAll();
