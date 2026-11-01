@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.network.SetDestinationPayload;
 import com.plants13.createtrainsscheduling.network.SetRoutePayload;
+import com.plants13.createtrainsscheduling.permissions.ModPermission;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.compat.trainmap.TrainMapSync;
 import com.simibubi.create.compat.trainmap.TrainMapSyncClient;
@@ -209,6 +210,25 @@ public final class DispatchOverlay {
         }
 
         if (XaeroDispatchMenu.isActive()) {
+            // 菜单开着时：点菜单内部走菜单；直接点地图车站 = 快捷设定目的地
+            if (XaeroDispatchMenu.isOverMenu(guiMouseX, guiMouseY)) {
+                return XaeroDispatchMenu.handleClick(guiMouseX, guiMouseY, button);
+            }
+            if (button == 0 && mc.level != null) {
+                double stationMouseX = projection.screenToWorldX(guiMouseX);
+                double stationMouseZ = projection.screenToWorldZ(guiMouseY);
+                GlobalStation station = findStationAt(stationMouseX, stationMouseZ, mc.level.dimension());
+                UUID quickTrain = XaeroDispatchMenu.trainId();
+                if (station != null && quickTrain != null
+                        && PermissionCache.has(ModPermission.DISPATCH)
+                        && ClientChannelCheck.canSendToServer(SetDestinationPayload.TYPE)) {
+                    PacketDistributor.sendToServer(new SetDestinationPayload(quickTrain, station.id));
+                    CreateTrainsScheduling.LOGGER.info(
+                            "[CTS] quick destination from menu: train={} station={}", quickTrain, station.name);
+                    XaeroDispatchMenu.close();
+                    return true;
+                }
+            }
             return XaeroDispatchMenu.handleClick(guiMouseX, guiMouseY, button);
         }
 

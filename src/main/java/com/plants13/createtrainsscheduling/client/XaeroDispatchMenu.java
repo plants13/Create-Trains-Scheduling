@@ -91,6 +91,20 @@ public final class XaeroDispatchMenu {
         return trainId;
     }
 
+    /** 鼠标是否悬停在菜单面板上（用于区分"点菜单"和"点地图车站"）。 */
+    public static boolean isOverMenu(double mouseX, double mouseY) {
+        if (state != State.OPEN) {
+            return false;
+        }
+        Train train = currentTrain();
+        if (train == null) {
+            return false;
+        }
+        layout(train);
+        return mouseX >= panelX && mouseX < panelX + panelWidth
+                && mouseY >= panelY && mouseY < panelY + panelHeight;
+    }
+
     public static void open(Train train, double mouseX, double mouseY) {
         state = State.OPEN;
         trainId = train.id;
