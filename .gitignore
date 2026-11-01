@@ -46,3 +46,7 @@ repo/
 # 本地交接文档，不公开
 HANDOFF.md
 HANDOFF.local.md
+
+# 本地待办/开发笔记，不公开
+TODO.md
+
