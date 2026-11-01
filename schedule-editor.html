@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create: Trains Scheduling — Schedule Editor</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px 20px 80px; background: #14161a; color: #d8dbe0;
+         font: 14px/1.45 "Segoe UI", "Microsoft YaHei", sans-serif; }
+  h1 { font-size: 18px; margin: 0; color: #ffd54f; }
+  h2 { font-size: 15px; margin: 18px 0 8px; color: #90caf9; }
+  h3 { font-size: 14px; margin: 0; color: #ffd54f; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header .spacer { flex: 1; }
+  .muted { color: #8b929c; }
+  .small { font-size: 12px; }
+  .panel { background: #1b1f25; border: 1px solid #2c333c; border-radius: 8px; padding: 12px; margin: 10px 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { background: #263040; color: #d8dbe0; border: 1px solid #3b4756; border-radius: 6px;
+           padding: 5px 10px; cursor: pointer; }
+  button:hover { background: #324053; }
+  button.primary { background: #2e7d32; border-color: #388e3c; color: #fff; }
+  button.danger { background: #5a2424; border-color: #7a2f2f; }
+  button.small { padding: 2px 7px; font-size: 12px; }
+  input, select, textarea { background: #11141a; color: #e3e6ea; border: 1px solid #39424f;
+           border-radius: 4px; padding: 4px 6px; font: inherit; }
+  input[type="text"] { min-width: 120px; }
+  textarea { width: 100%; min-height: 180px; font-family: Consolas, monospace; font-size: 12px; }
+  textarea.raw { min-height: 320px; }
+  .card { background: #161a20; border: 1px solid #2c333c; border-radius: 8px; padding: 10px; margin: 8px 0; }
+  .card > .card-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .card-head .spacer { flex: 1; }
+  .col { border-left: 3px solid #334155; padding-left: 10px; margin: 8px 0; }
+  .cond { border-left: 3px solid #6b4f1d; padding-left: 10px; margin: 6px 0; }
+  table.data { border-collapse: collapse; width: 100%; margin: 4px 0; }
+  table.data td { padding: 2px 4px; vertical-align: top; }
+  table.data td.k { width: 150px; font-family: Consolas, monospace; color: #a5d6a7; }
+  #log { position: fixed; left: 0; right: 0; bottom: 0; max-height: 180px; overflow: auto;
+         background: #0b0d10; border-top: 1px solid #2c333c; padding: 6px 12px;
+         font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
+  #log .err { color: #fca5a5; } #log .ok { color: #86efac; } #log .warn { color: #fde68a; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 data-i18n="title">Create: Trains Scheduling — Schedule Editor</h1>
+  <span class="spacer"></span>
+  <button id="langBtn" onclick="toggleLang()">中文</button>
+</header>
+<div class="muted small" data-i18n="subtitle" style="margin-top:4px">
+  Local single-file tool: no network access, no pasted content is ever executed.
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0" data-i18n="sec.catalog">1. Catalog (lines / categories / stations)</h2>
+  <div class="row">
+    <button class="primary" onclick="loadCatalogFromClipboard()" data-i18n="btn.readCatalog">Read catalog from clipboard</button>
+    <button onclick="toggleImport()" data-i18n="btn.manualPaste">Paste manually…</button>
+    <span id="catalogStatus" class="muted small" data-i18n="catalog.notLoaded">No catalog loaded (only affects dropdown suggestions)</span>
+  </div>
+  <div id="importPanel" class="hidden" style="margin-top:8px">
+    <textarea id="importBox" data-i18n-placeholder="import.placeholder"></textarea>
+    <div class="row" style="margin-top:6px">
+      <button onclick="importCatalogFromBox()" data-i18n="btn.importCatalog">Import catalog JSON</button>
+      <button onclick="importScheduleFromBox()" data-i18n="btn.importSchedule">Import schedule JSON</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0" data-i18n="sec.schedule">2. Schedule</h2>
+  <div class="row">
+    <button class="primary" onclick="loadScheduleFromClipboard()" data-i18n="btn.readSchedule">Read schedule from clipboard</button>
+    <button onclick="newSchedule()" data-i18n="btn.new">New empty schedule</button>
+    <button onclick="copySchedule()" data-i18n="btn.copy">Copy schedule JSON</button>
+    <button onclick="downloadSchedule()" data-i18n="btn.download">Download JSON</button>
+    <button onclick="validateAll()" data-i18n="btn.validate">Validate</button>
+    <button onclick="toggleRaw()" data-i18n="btn.raw">Raw JSON</button>
+    <span id="scheduleStatus" class="muted small" data-i18n="schedule.notLoaded">No schedule loaded</span>
+  </div>
+  <div id="visualPane" style="margin-top:10px"></div>
+  <div id="rawPane" class="hidden" style="margin-top:10px">
+    <textarea id="rawText" class="raw"></textarea>
+    <div class="row" style="margin-top:6px">
+      <button onclick="applyRaw()" data-i18n="raw.apply">Apply raw JSON</button>
+      <button onclick="refreshRaw()" data-i18n="raw.refresh">Refresh from editor</button>
+      <span class="muted small" data-i18n="raw.hint">Edit the full JSON (typed NBT) directly</span>
+    </div>
+  </div>
+</div>
+
+<div id="log"></div>
+<datalist id="stationList"></datalist>
+
+<script>
+'use strict';
+
+// ---------------------------------------------------------------------------
+// i18n
+// ---------------------------------------------------------------------------
+
+const I18N = {
+  zh: {    'title': 'Create: Trains Scheduling — 时刻表编辑器',
+    'subtitle': '纯本地单文件工具：不联网、不执行任何粘贴内容。流程：游戏内 /cts getcrn 复制目录，/cts getsch 复制时刻表 → 在本页导入 → 编辑 → 复制 JSON → 游戏内 /cts writesch。',
+    'lang.button': 'English',
+    'sec.catalog': '1. 目录（线路 / 种类 / 车站）',
+    'btn.readCatalog': '从剪贴板读取目录',
+    'btn.manualPaste': '手动粘贴…',
+    'catalog.notLoaded': '未加载目录（不影响编辑，只影响下拉建议）',
+    'catalog.loaded': '目录已加载：%s 线路 / %s 种类 / %s 车站 / %s 指令 / %s 条件',
+    'btn.importCatalog': '导入目录 JSON',
+    'btn.importSchedule': '导入时刻表 JSON',
+    'import.placeholder': '把 /cts getcrn 或 /cts getsch 复制到的 JSON 粘贴到这里',
+    'sec.schedule': '2. 时刻表',
+    'btn.readSchedule': '从剪贴板读取时刻表',
+    'btn.new': '新建空白时刻表',
+    'btn.copy': '复制时刻表 JSON 到剪贴板',
+    'btn.download': '下载 JSON',
+    'btn.validate': '校验',
+    'btn.raw': '原始 JSON',
+    'schedule.notLoaded': '未加载时刻表',
+    'schedule.loaded': '时刻表已加载：%s 个条目',
+    'visual.empty': '尚未加载时刻表。先 /cts getsch 复制，或点"新建空白时刻表"。',
+    'cyclic.label': '循环时刻表（跑完从头开始）',
+    'btn.addEntry': '＋ 添加条目',
+    'entry.title': '条目 #%s',
+    'btn.up': '↑',
+    'btn.down': '↓',
+    'btn.dup': '复制',
+    'btn.del': '删除',
+    'confirm.delEntry': '删除条目 #%s？',
+    'data.textLabel': 'Data.Text（车站名/标题）：',
+    'data.otherLabel': 'Data 其它字段（高级）：',
+    'data.addField': '＋ 添加字段',
+    'data.fieldKey': '字段名，如 Text / Count',
+    'data.noCompound': '（不是 compound，无法编辑）',
+    'conditions.label': '条件列（每列内条件同时满足，列与列之间按 Create 规则组合）：',
+    'btn.addColumn': '＋ 条件列',
+    'cond.title': '条件列 #%s',
+    'btn.delColumn': '删除该列',
+    'confirm.delColumn': '删除条件列 #%s？',
+    'btn.delCondition': '删除条件',
+    'btn.addCondition': '＋ 添加条件',
+    'raw.apply': '应用原始 JSON',
+    'raw.refresh': '从编辑器刷新',
+    'raw.hint': '直接编辑完整 JSON（typed NBT 结构），适合高级用法',
+    'log.ready': '编辑器已就绪。先在游戏内执行 /cts getcrn 和 /cts getsch，把 JSON 导入本页。',
+    'log.catalogLoaded': '目录已加载',
+    'log.catalogInvalid': '目录 JSON 无效',
+    'log.catalogBadFormat': '目录格式不匹配：%s',
+    'log.jsonParseFail': '%s JSON 解析失败：%s',
+    'log.scheduleLoaded': '时刻表已加载',
+    'log.scheduleInvalid': '时刻表结构无效：%s',
+    'log.notObject': '不是 JSON 对象',
+    'log.formatMismatch': '时刻表格式不匹配：%s',
+    'log.missingSchedule': '缺少 schedule 节点',
+    'log.compoundRequired': 'schedule 必须是 compound',
+    'log.copyOk': '时刻表 JSON 已复制到剪贴板',
+    'log.copyFail': '复制失败：请用"原始 JSON"手动复制',
+    'log.clipboardUnavailable': '浏览器不允许直接读剪贴板，请点击"手动粘贴…"把 JSON 粘到文本框再导入',
+    'log.notNumber': '不是合法数字：%s',
+    'log.rawInvalid': 'typed JSON 无效：%s',
+    'log.emptyPaste': '粘贴框是空的',
+    'log.noSchedule': '还没有时刻表',
+    'log.noScheduleYet': '尚未加载时刻表',
+    'log.validateOk': '校验通过：结构、id、字符串长度均符合服务端要求',
+    'log.validateWarnOnly': '只有警告，仍可尝试写入（服务端会做最终校验）',
+    'log.validateIssues': '校验发现问题：',
+    'prefix.err': '[错误] ',
+    'prefix.warn': '[警告] ',
+    'v.entries.empty': '时刻表至少需要一个条目',
+    'v.entries.tooMany': '条目过多：%s（最多 %s）',
+    'v.entry.noInstruction': '条目 #%s 缺少 Instruction',
+    'v.entry.noId': '条目 #%s 缺少指令 Id',
+    'v.entry.unknownId': '条目 #%s 的指令不在当前目录列表：%s（服务端可能拒绝）',
+    'v.condition.noId': '条目 #%s 条件列 #%s 条件 #%s 缺少 Id',
+    'v.condition.unknown': '条件 id 不在列表：%s',
+    'v.conditions.tooManyColumns': '条目 #%s 条件列过多（最多 %s）',
+    'v.condition.invalid': '条目 #%s 条件列 #%s 结构无效',
+    'v.conditions.tooMany': '条目 #%s 条件列 #%s 条件过多',
+    'v.string.tooLong': '%s 字符串过长（> %s）',
+    'v.string.section': '%s 含 § 格式化符',
+    'v.string.control': '%s 含控制字符',
+    'v.depth': '%s 嵌套过深'
+  },  en: {
+    'title': 'Create: Trains Scheduling — Schedule Editor',
+    'subtitle': 'Local single-file tool: no network access, no pasted content is ever executed. Flow: /cts getcrn copies the catalog, /cts getsch copies the schedule -> import here -> edit -> copy the JSON -> /cts writesch in game.',
+    'lang.button': '中文',
+    'sec.catalog': '1. Catalog (lines / categories / stations)',
+    'btn.readCatalog': 'Read catalog from clipboard',
+    'btn.manualPaste': 'Paste manually…',
+    'catalog.notLoaded': 'No catalog loaded (only affects dropdown suggestions)',
+    'catalog.loaded': 'Catalog loaded: %s lines / %s categories / %s stations / %s instructions / %s conditions',
+    'btn.importCatalog': 'Import catalog JSON',
+    'btn.importSchedule': 'Import schedule JSON',
+    'import.placeholder': 'Paste the JSON copied by /cts getcrn or /cts getsch here',
+    'sec.schedule': '2. Schedule',
+    'btn.readSchedule': 'Read schedule from clipboard',
+    'btn.new': 'New empty schedule',
+    'btn.copy': 'Copy schedule JSON',
+    'btn.download': 'Download JSON',
+    'btn.validate': 'Validate',
+    'btn.raw': 'Raw JSON',
+    'schedule.notLoaded': 'No schedule loaded',
+    'schedule.loaded': 'Schedule loaded: %s entries',
+    'visual.empty': 'No schedule loaded yet. Copy one with /cts getsch or click "New empty schedule".',
+    'cyclic.label': 'Cyclic schedule (restart after the last entry)',
+    'btn.addEntry': '＋ Add entry',
+    'entry.title': 'Entry #%s',
+    'btn.up': '↑',
+    'btn.down': '↓',
+    'btn.dup': 'Duplicate',
+    'btn.del': 'Delete',
+    'confirm.delEntry': 'Delete entry #%s?',
+    'data.textLabel': 'Data.Text (station name / title):',
+    'data.otherLabel': 'Other Data fields (advanced):',
+    'data.addField': '＋ Add field',
+    'data.fieldKey': 'Field name, e.g. Text / Count',
+    'data.noCompound': '(not a compound, cannot edit)',
+    'conditions.label': 'Condition columns (conditions inside a column are combined by Create rules):',
+    'btn.addColumn': '＋ Condition column',
+    'cond.title': 'Condition column #%s',
+    'btn.delColumn': 'Delete column',
+    'confirm.delColumn': 'Delete condition column #%s?',
+    'btn.delCondition': 'Delete condition',
+    'btn.addCondition': '＋ Add condition',
+    'raw.apply': 'Apply raw JSON',
+    'raw.refresh': 'Refresh from editor',
+    'raw.hint': 'Edit the full JSON (typed NBT) directly',
+    'log.ready': 'Editor ready. Run /cts getcrn and /cts getsch in game, then import the JSON here.',
+    'log.catalogLoaded': 'Catalog loaded',
+    'log.catalogInvalid': 'Invalid catalog JSON',
+    'log.catalogBadFormat': 'Catalog format mismatch: %s',
+    'log.jsonParseFail': '%s JSON parse failed: %s',
+    'log.scheduleLoaded': 'Schedule loaded',
+    'log.scheduleInvalid': 'Invalid schedule structure: %s',
+    'log.notObject': 'Not a JSON object',
+    'log.formatMismatch': 'Schedule format mismatch: %s',
+    'log.missingSchedule': 'Missing schedule node',
+    'log.compoundRequired': 'schedule must be a compound',
+    'log.copyOk': 'Schedule JSON copied to clipboard',
+    'log.copyFail': 'Copy failed: use the raw JSON textarea to copy manually',
+    'log.clipboardUnavailable': 'The browser does not allow clipboard access; use "Paste manually…" instead',
+    'log.notNumber': 'Not a valid number: %s',
+    'log.rawInvalid': 'Invalid typed JSON: %s',
+    'log.emptyPaste': 'Paste box is empty',
+    'log.noSchedule': 'No schedule yet',
+    'log.noScheduleYet': 'No schedule loaded yet',
+    'log.validateOk': 'Validation passed: structure, ids and string limits match the server rules',
+    'log.validateWarnOnly': 'Warnings only; the server performs the final validation',
+    'log.validateIssues': 'Validation issues:',
+    'prefix.err': '[Error] ',
+    'prefix.warn': '[Warning] ',
+    'v.entries.empty': 'The schedule needs at least one entry',
+    'v.entries.tooMany': 'Too many entries: %s (max %s)',
+    'v.entry.noInstruction': 'Entry #%s has no Instruction',
+    'v.entry.noId': 'Entry #%s has no instruction Id',
+    'v.entry.unknownId': 'Entry #%s uses an instruction not in the catalog: %s (the server may reject it)',
+    'v.condition.noId': 'Entry #%s column #%s condition #%s has no Id',
+    'v.condition.unknown': 'Unknown condition id: %s',
+    'v.conditions.tooManyColumns': 'Entry #%s has too many condition columns (max %s)',
+    'v.condition.invalid': 'Entry #%s column #%s has an invalid structure',
+    'v.conditions.tooMany': 'Entry #%s column #%s has too many conditions',
+    'v.string.tooLong': '%s is too long (> %s)',
+    'v.string.section': '%s contains the § formatting sign',
+    'v.string.control': '%s contains control characters',
+    'v.depth': '%s is nested too deeply'
+  }
+};
+
+let lang = (() => {
+  try {
+    const stored = localStorage.getItem('cts-editor-lang');
+    if (stored === 'zh' || stored === 'en') return stored;
+  } catch (e) { /* ignore */ }
+  return String(navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+})();
+
+function t(key) {
+  const table = I18N[lang] || I18N.en;
+  let text = table[key] != null ? table[key] : (I18N.en[key] != null ? I18N.en[key] : key);
+  const args = Array.prototype.slice.call(arguments, 1);
+  let i = 0;
+  return text.replace(/%s/g, () => (i < args.length ? String(args[i++]) : '%s'));
+}
+
+function toggleLang() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('cts-editor-lang', lang); } catch (e) { /* ignore */ }
+  applyI18n();
+}
+
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  const langBtn = document.getElementById('langBtn');
+  if (langBtn) langBtn.textContent = t('lang.button');
+  document.getElementById('log').textContent = '';
+  log(t('log.ready'));
+  renderAll();
+}
+
+// ---------------------------------------------------------------------------
+// constants / helpers
+// ---------------------------------------------------------------------------
+
+const SCHEDULE_FORMAT = 'create-trains-scheduling/schedule';
+const CATALOG_FORMAT = 'create-trains-scheduling/editor-catalog';
+const MAX_ENTRIES = 64, MAX_COLUMNS = 8, MAX_CONDITIONS = 16, MAX_STRING = 256;
+
+const FALLBACK_INSTRUCTIONS = [
+  'create:destination', 'create:package_retrieval', 'create:package_delivery',
+  'create:rename', 'create:throttle', 'railways:waypoint_destination'
+];
+const FALLBACK_CONDITIONS = [
+  'create:delay', 'create:item_threshold', 'create:fluid_threshold', 'create:idle',
+  'create:time_of_day', 'create:player_count', 'create:redstone_link',
+  'create:unloaded', 'create:powered'
+];
+
+const state = { catalog: null, schedule: null };
+const $ = (id) => document.getElementById(id);
+
+function log(msg, cls) {
+  const el = document.createElement('div');
+  el.className = cls || '';
+  el.textContent = msg;
+  $('log').appendChild(el);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+const N = {
+  compound: (obj) => ({ t: 'compound', v: obj || {} }),
+  list: (arr) => ({ t: 'list', v: arr || [] }),
+  string: (s) => ({ t: 'string', v: String(s == null ? '' : s) }),
+  byte: (n) => ({ t: 'byte', v: Math.trunc(Number(n) || 0) }),
+  short: (n) => ({ t: 'short', v: Math.trunc(Number(n) || 0) }),
+  int: (n) => ({ t: 'int', v: Math.trunc(Number(n) || 0) }),
+  long: (n) => ({ t: 'long', v: Math.trunc(Number(n) || 0) }),
+  float: (n) => ({ t: 'float', v: Number(n) || 0 }),
+  double: (n) => ({ t: 'double', v: Number(n) || 0 })
+};
+
+const PRIMITIVE_TYPES = ['byte', 'short', 'int', 'long', 'float', 'double', 'string'];
+const ALL_TYPES = PRIMITIVE_TYPES.concat(['list', 'compound', 'byteArray', 'intArray', 'longArray']);
+
+function nodeValue(node, fallback) { return node && node.v != null ? node.v : fallback; }
+function strValue(node) { return node && node.t === 'string' ? String(node.v) : ''; }
+
+function getData(entry) {
+  const instr = entry && entry.v ? entry.v.Instruction : null;
+  if (!instr || !instr.v) return null;
+  if (!instr.v.Data) instr.v.Data = N.compound();
+  return instr.v.Data;
+}
+
+function entriesList() {
+  if (!state.schedule || !state.schedule.v) return [];
+  if (!state.schedule.v.Entries || state.schedule.v.Entries.t !== 'list') {
+    state.schedule.v.Entries = N.list([]);
+  }
+  return state.schedule.v.Entries.v;
+}
+
+function makeEntry(instructionId) {
+  return N.compound({
+    Instruction: N.compound({ Id: N.string(instructionId || 'create:destination'), Data: N.compound() }),
+    Conditions: N.list([])
+  });
+}
+
+function newScheduleData() {
+  state.schedule = N.compound({
+    Entries: N.list([makeEntry('create:destination')]),
+    Cyclic: N.byte(1)
+  });
+  renderAll();
+}
+// ---------------------------------------------------------------------------
+// clipboard
+// ---------------------------------------------------------------------------
+
+async function readClipboard() {
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) return await navigator.clipboard.readText();
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* ignore */ }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  return ok;
+}
+
+// ---------------------------------------------------------------------------
+// catalog
+// ---------------------------------------------------------------------------
+
+function applyCatalog(cat) {
+  if (!cat || typeof cat !== 'object') { log(t('log.catalogInvalid'), 'err'); return; }
+  if (cat.format && cat.format !== CATALOG_FORMAT) {
+    log(t('log.catalogBadFormat', cat.format), 'err');
+    return;
+  }
+  state.catalog = {
+    lines: Array.isArray(cat.lines) ? cat.lines : [],
+    categories: Array.isArray(cat.categories) ? cat.categories : [],
+    stations: Array.isArray(cat.stations) ? cat.stations : [],
+    instructions: Array.isArray(cat.instructions) ? cat.instructions : FALLBACK_INSTRUCTIONS,
+    conditions: Array.isArray(cat.conditions) ? cat.conditions : FALLBACK_CONDITIONS
+  };
+  const list = $('stationList');
+  list.textContent = '';
+  for (const station of state.catalog.stations) {
+    const opt = document.createElement('option');
+    opt.value = String(station);
+    list.appendChild(opt);
+  }
+  $('catalogStatus').textContent = t('catalog.loaded',
+    state.catalog.lines.length, state.catalog.categories.length, state.catalog.stations.length,
+    state.catalog.instructions.length, state.catalog.conditions.length);
+  log(t('log.catalogLoaded'), 'ok');
+  renderAll();
+}
+
+async function loadCatalogFromClipboard() {
+  const text = await readClipboard();
+  if (text == null) { log(t('log.clipboardUnavailable'), 'warn'); toggleImport(true); return; }
+  try { applyCatalog(JSON.parse(text)); }
+  catch (e) { log(t('log.jsonParseFail', 'Catalog', e.message), 'err'); }
+}
+
+function importCatalogFromBox() {
+  const text = $('importBox').value.trim();
+  if (!text) { log(t('log.emptyPaste'), 'warn'); return; }
+  try { applyCatalog(JSON.parse(text)); }
+  catch (e) { log(t('log.jsonParseFail', 'Catalog', e.message), 'err'); }
+}
+
+// ---------------------------------------------------------------------------
+// schedule import / export
+// ---------------------------------------------------------------------------
+
+function normalizeScheduleRoot(obj) {
+  if (!obj || typeof obj !== 'object') throw new Error(t('log.notObject'));
+  let tag = null;
+  if (obj.schedule && obj.schedule.t) {
+    if (obj.format && obj.format !== SCHEDULE_FORMAT) throw new Error(t('log.formatMismatch', obj.format));
+    tag = obj.schedule;
+  } else if (obj.t === 'compound') {
+    tag = obj;
+  } else {
+    throw new Error(t('log.missingSchedule'));
+  }
+  if (tag.t !== 'compound') throw new Error(t('log.compoundRequired'));
+  if (!tag.v) tag.v = {};
+  if (!tag.v.Entries || tag.v.Entries.t !== 'list') tag.v.Entries = N.list([makeEntry('create:destination')]);
+  if (!tag.v.Cyclic) tag.v.Cyclic = N.byte(1);
+  return tag;
+}
+
+function loadScheduleText(text) {
+  let obj;
+  try { obj = JSON.parse(text); }
+  catch (e) { log(t('log.jsonParseFail', 'Schedule', e.message), 'err'); return; }
+  try { state.schedule = normalizeScheduleRoot(obj); }
+  catch (e) { log(t('log.scheduleInvalid', e.message), 'err'); return; }
+  $('scheduleStatus').textContent = t('schedule.loaded', entriesList().length);
+  log(t('log.scheduleLoaded'), 'ok');
+  renderAll();
+}
+
+async function loadScheduleFromClipboard() {
+  const text = await readClipboard();
+  if (text == null) { log(t('log.clipboardUnavailable'), 'warn'); toggleImport(true); return; }
+  loadScheduleText(text);
+}
+
+function importScheduleFromBox() {
+  const text = $('importBox').value.trim();
+  if (!text) { log(t('log.emptyPaste'), 'warn'); return; }
+  loadScheduleText(text);
+}
+
+function buildScheduleRoot() {
+  if (!state.schedule) throw new Error(t('log.noSchedule'));
+  const cyclic = nodeValue(state.schedule.v.Cyclic, 1) !== 0;
+  return { format: SCHEDULE_FORMAT, version: 1, cyclic: cyclic, schedule: state.schedule };
+}
+
+async function copySchedule() {
+  try {
+    const text = JSON.stringify(buildScheduleRoot(), null, 2);
+    const ok = await copyText(text);
+    log(ok ? t('log.copyOk') : t('log.copyFail'), ok ? 'ok' : 'err');
+  } catch (e) { log(e.message, 'err'); }
+}
+
+function downloadSchedule() {
+  try {
+    const text = JSON.stringify(buildScheduleRoot(), null, 2);
+    const blob = new Blob([text], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'schedule.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (e) { log(e.message, 'err'); }
+}
+// ---------------------------------------------------------------------------
+// visual editor
+// ---------------------------------------------------------------------------
+
+function instructionOptions(current) {
+  const list = (state.catalog ? state.catalog.instructions : FALLBACK_INSTRUCTIONS).slice();
+  if (current && !list.includes(current)) list.push(current);
+  return list;
+}
+
+function conditionOptions(current) {
+  const list = (state.catalog ? state.catalog.conditions : FALLBACK_CONDITIONS).slice();
+  if (current && !list.includes(current)) list.push(current);
+  return list;
+}
+
+function makeSelect(options, current, onChange) {
+  const sel = document.createElement('select');
+  for (const value of options) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    if (value === current) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  sel.onchange = () => onChange(sel.value);
+  return sel;
+}
+
+function makeButton(text, cls, onClick) {
+  const b = document.createElement('button');
+  b.className = 'small ' + (cls || '');
+  b.textContent = text;
+  b.onclick = onClick;
+  return b;
+}
+
+function renderAll() { renderVisual(); refreshRaw(); }
+
+function renderVisual() {
+  const pane = $('visualPane');
+  pane.textContent = '';
+  if (!state.schedule) {
+    const p = document.createElement('div');
+    p.className = 'muted';
+    p.textContent = t('visual.empty');
+    pane.appendChild(p);
+    return;
+  }
+
+  const cyclicRow = document.createElement('div');
+  cyclicRow.className = 'row';
+  const cyclicLabel = document.createElement('label');
+  const cyclicBox = document.createElement('input');
+  cyclicBox.type = 'checkbox';
+  cyclicBox.checked = nodeValue(state.schedule.v.Cyclic, 1) !== 0;
+  cyclicBox.onchange = () => { state.schedule.v.Cyclic = N.byte(cyclicBox.checked ? 1 : 0); renderAll(); };
+  cyclicLabel.appendChild(cyclicBox);
+  cyclicLabel.appendChild(document.createTextNode(' ' + t('cyclic.label')));
+  cyclicRow.appendChild(cyclicLabel);
+  cyclicRow.appendChild(makeButton(t('btn.addEntry'), 'primary', () => {
+    entriesList().push(makeEntry('create:destination'));
+    renderAll();
+  }));
+  pane.appendChild(cyclicRow);
+
+  entriesList().forEach((entry, index) => pane.appendChild(renderEntry(entry, index)));
+}
+
+function renderEntry(entry, index) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  if (!entry.v) entry.v = {};
+  if (!entry.v.Instruction || entry.v.Instruction.t !== 'compound') {
+    entry.v.Instruction = N.compound({ Id: N.string('create:destination'), Data: N.compound() });
+  }
+  const instr = entry.v.Instruction;
+  if (!instr.v.Id) instr.v.Id = N.string('create:destination');
+  if (!instr.v.Data || instr.v.Data.t !== 'compound') instr.v.Data = N.compound();
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+  const title = document.createElement('h3');
+  title.textContent = t('entry.title', index + 1);
+  head.appendChild(title);
+  head.appendChild(makeSelect(instructionOptions(strValue(instr.v.Id)), strValue(instr.v.Id), (value) => {
+    instr.v.Id = N.string(value);
+    renderAll();
+  }));
+  const spacer = document.createElement('span');
+  spacer.className = 'spacer';
+  head.appendChild(spacer);
+  head.appendChild(makeButton(t('btn.up'), '', () => moveEntry(index, -1)));
+  head.appendChild(makeButton(t('btn.down'), '', () => moveEntry(index, 1)));
+  head.appendChild(makeButton(t('btn.dup'), '', () => {
+    entriesList().splice(index + 1, 0, JSON.parse(JSON.stringify(entry)));
+    renderAll();
+  }));
+  head.appendChild(makeButton(t('btn.del'), 'danger', () => {
+    if (!confirm(t('confirm.delEntry', index + 1))) return;
+    entriesList().splice(index, 1);
+    renderAll();
+  }));
+  card.appendChild(head);
+
+  const data = getData(entry);
+  const textRow = document.createElement('div');
+  textRow.className = 'row';
+  const textLabel = document.createElement('span');
+  textLabel.className = 'muted small';
+  textLabel.textContent = t('data.textLabel');
+  textRow.appendChild(textLabel);
+  const textInput = document.createElement('input');
+  textInput.type = 'text';
+  textInput.style.flex = '1';
+  textInput.setAttribute('list', 'stationList');
+  textInput.value = strValue(data.v.Text);
+  textInput.onchange = () => {
+    if (textInput.value === '') delete data.v.Text;
+    else data.v.Text = N.string(textInput.value);
+    renderAll();
+  };
+  textRow.appendChild(textInput);
+  card.appendChild(textRow);
+
+  const dataTitle = document.createElement('div');
+  dataTitle.className = 'muted small';
+  dataTitle.style.marginTop = '8px';
+  dataTitle.textContent = t('data.otherLabel');
+  card.appendChild(dataTitle);
+  card.appendChild(renderDataTable(data, true));
+
+  const condTitle = document.createElement('div');
+  condTitle.className = 'row';
+  condTitle.style.marginTop = '10px';
+  const ct = document.createElement('span');
+  ct.className = 'muted small';
+  ct.textContent = t('conditions.label');
+  condTitle.appendChild(ct);
+  condTitle.appendChild(makeButton(t('btn.addColumn'), '', () => {
+    if (!entry.v.Conditions || entry.v.Conditions.t !== 'list') entry.v.Conditions = N.list([]);
+    entry.v.Conditions.v.push(N.list([]));
+    renderAll();
+  }));
+  card.appendChild(condTitle);
+
+  if (!entry.v.Conditions || entry.v.Conditions.t !== 'list') entry.v.Conditions = N.list([]);
+  entry.v.Conditions.v.forEach((column, colIndex) => {
+    card.appendChild(renderConditionColumn(entry, column, index, colIndex));
+  });
+  return card;
+}
+
+function moveEntry(index, delta) {
+  const list = entriesList();
+  const target = index + delta;
+  if (target < 0 || target >= list.length) return;
+  const tmp = list[index];
+  list[index] = list[target];
+  list[target] = tmp;
+  renderAll();
+}
+function renderConditionColumn(entry, column, entryIndex, colIndex) {
+  if (!column || column.t !== 'list') {
+    column = N.list([]);
+    entry.v.Conditions.v[colIndex] = column;
+  }
+  const col = document.createElement('div');
+  col.className = 'col';
+  const head = document.createElement('div');
+  head.className = 'row';
+  const label = document.createElement('span');
+  label.className = 'muted small';
+  label.textContent = t('cond.title', colIndex + 1);
+  head.appendChild(label);
+  const spacer = document.createElement('span');
+  spacer.className = 'spacer';
+  head.appendChild(spacer);
+  head.appendChild(makeButton(t('btn.delColumn'), 'danger', () => {
+    if (!confirm(t('confirm.delColumn', colIndex + 1))) return;
+    entry.v.Conditions.v.splice(colIndex, 1);
+    renderAll();
+  }));
+  col.appendChild(head);
+
+  column.v.forEach((condition, condIndex) => {
+    if (!condition.v) condition.v = {};
+    if (!condition.v.Id) condition.v.Id = N.string('create:delay');
+    if (!condition.v.Data || condition.v.Data.t !== 'compound') condition.v.Data = N.compound();
+    const wrap = document.createElement('div');
+    wrap.className = 'cond';
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.appendChild(makeSelect(conditionOptions(strValue(condition.v.Id)), strValue(condition.v.Id), (value) => {
+      condition.v.Id = N.string(value);
+      renderAll();
+    }));
+    row.appendChild(makeButton(t('btn.delCondition'), 'danger', () => {
+      column.v.splice(condIndex, 1);
+      renderAll();
+    }));
+    wrap.appendChild(row);
+    wrap.appendChild(renderDataTable(condition.v.Data, true));
+    col.appendChild(wrap);
+  });
+
+  const addRow = document.createElement('div');
+  addRow.className = 'row';
+  let newId = (state.catalog ? state.catalog.conditions[0] : 'create:delay') || 'create:delay';
+  addRow.appendChild(makeSelect(conditionOptions(newId), newId, (value) => { newId = value; }));
+  addRow.appendChild(makeButton(t('btn.addCondition'), '', () => {
+    column.v.push(N.compound({ Id: N.string(newId), Data: N.compound() }));
+    renderAll();
+  }));
+  col.appendChild(addRow);
+  return col;
+}
+
+function renderDataTable(dataCompound, allowAdd) {
+  const table = document.createElement('table');
+  table.className = 'data';
+  if (!dataCompound || dataCompound.t !== 'compound') {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.className = 'muted';
+    td.textContent = t('data.noCompound');
+    tr.appendChild(td);
+    table.appendChild(tr);
+    return table;
+  }
+  const obj = dataCompound.v;
+  for (const key of Object.keys(obj)) {
+    const node = obj[key];
+    const tr = document.createElement('tr');
+    const kd = document.createElement('td');
+    kd.className = 'k';
+    kd.textContent = key;
+    tr.appendChild(kd);
+
+    const tdType = document.createElement('td');
+    const typeSel = document.createElement('select');
+    for (const type of ALL_TYPES) {
+      const opt = document.createElement('option');
+      opt.value = type;
+      opt.textContent = type;
+      if (node.t === type) opt.selected = true;
+      typeSel.appendChild(opt);
+    }
+    typeSel.onchange = () => { obj[key] = convertNode(node, typeSel.value); renderAll(); };
+    tdType.appendChild(typeSel);
+    tr.appendChild(tdType);
+
+    const tdValue = document.createElement('td');
+    tdValue.appendChild(renderNodeEditor(node, (updated) => { obj[key] = updated; renderAll(); }));
+    tr.appendChild(tdValue);
+
+    const tdDel = document.createElement('td');
+    tdDel.appendChild(makeButton('✕', 'danger', () => { delete obj[key]; renderAll(); }));
+    tr.appendChild(tdDel);
+    table.appendChild(tr);
+  }
+
+  if (allowAdd) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    const row = document.createElement('div');
+    row.className = 'row';
+    const keyInput = document.createElement('input');
+    keyInput.type = 'text';
+    keyInput.placeholder = t('data.fieldKey');
+    row.appendChild(keyInput);
+    let addType = 'string';
+    const typeSel = document.createElement('select');
+    for (const type of ALL_TYPES) {
+      const opt = document.createElement('option');
+      opt.value = type;
+      opt.textContent = type;
+      typeSel.appendChild(opt);
+    }
+    typeSel.onchange = () => { addType = typeSel.value; };
+    row.appendChild(typeSel);
+    row.appendChild(makeButton(t('data.addField'), '', () => {
+      const key = keyInput.value.trim();
+      if (!key) return;
+      obj[key] = defaultNode(addType);
+      keyInput.value = '';
+      renderAll();
+    }));
+    td.appendChild(row);
+    tr.appendChild(td);
+    table.appendChild(tr);
+  }
+  return table;
+}
+
+function defaultNode(type) {
+  switch (type) {
+    case 'byte': return N.byte(0);
+    case 'short': return N.short(0);
+    case 'int': return N.int(0);
+    case 'long': return N.long(0);
+    case 'float': return N.float(0);
+    case 'double': return N.double(0);
+    case 'string': return N.string('');
+    case 'list': return N.list([]);
+    case 'compound': return N.compound();
+    case 'byteArray': return { t: 'byteArray', v: [] };
+    case 'intArray': return { t: 'intArray', v: [] };
+    case 'longArray': return { t: 'longArray', v: [] };
+    default: return N.string('');
+  }
+}
+
+function convertNode(node, type) { return (!node || node.t !== type) ? defaultNode(type) : node; }
+
+function renderNodeEditor(node, onChange) {
+  if (PRIMITIVE_TYPES.includes(node.t)) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = node.v == null ? '' : String(node.v);
+    input.style.width = '220px';
+    input.onchange = () => {
+      const value = input.value;
+      if (node.t === 'string') { onChange(N.string(value)); return; }
+      const num = Number(value);
+      if (Number.isNaN(num)) { log(t('log.notNumber', value), 'warn'); renderAll(); return; }
+      onChange({ t: node.t, v: num });
+    };
+    return input;
+  }
+  const ta = document.createElement('textarea');
+  ta.style.minHeight = '60px';
+  ta.value = JSON.stringify(node, null, 2);
+  ta.onchange = () => {
+    try {
+      const parsed = JSON.parse(ta.value);
+      if (!parsed || typeof parsed !== 'object' || !parsed.t) throw new Error('missing t');
+      onChange(parsed);
+    } catch (e) {
+      log(t('log.rawInvalid', e.message), 'err');
+      renderAll();
+    }
+  };
+  return ta;
+}
+
+function toggleRaw() {
+  const raw = $('rawPane');
+  raw.classList.toggle('hidden');
+  if (!raw.classList.contains('hidden')) refreshRaw();
+}
+
+function refreshRaw() {
+  const ta = $('rawText');
+  if (!ta) return;
+  try { ta.value = state.schedule ? JSON.stringify(buildScheduleRoot(), null, 2) : ''; }
+  catch (e) { ta.value = ''; }
+}
+
+function applyRaw() { loadScheduleText($('rawText').value); }
+
+function toggleImport(force) {
+  const panel = $('importPanel');
+  if (force === true) panel.classList.remove('hidden');
+  else panel.classList.toggle('hidden');
+}
+// ---------------------------------------------------------------------------
+// validation
+// ---------------------------------------------------------------------------
+
+function knownInstructionSet() { return new Set(state.catalog ? state.catalog.instructions : FALLBACK_INSTRUCTIONS); }
+function knownConditionSet() { return new Set(state.catalog ? state.catalog.conditions : FALLBACK_CONDITIONS); }
+
+function validateAll() {
+  const issues = [];
+  const err = (m) => issues.push({ level: 'err', m });
+  const warn = (m) => issues.push({ level: 'warn', m });
+
+  if (!state.schedule) {
+    err(t('log.noScheduleYet'));
+  } else {
+    const entries = entriesList();
+    if (entries.length === 0) err(t('v.entries.empty'));
+    if (entries.length > MAX_ENTRIES) err(t('v.entries.tooMany', entries.length, MAX_ENTRIES));
+
+    const instrKnown = knownInstructionSet();
+    const condKnown = knownConditionSet();
+
+    entries.forEach((entry, index) => {
+      const n = index + 1;
+      const instr = entry && entry.v ? entry.v.Instruction : null;
+      if (!instr || instr.t !== 'compound') { err(t('v.entry.noInstruction', n)); return; }
+      const id = strValue(instr.v.Id);
+      if (!id) err(t('v.entry.noId', n));
+      else if (!instrKnown.has(id)) warn(t('v.entry.unknownId', n, id));
+
+      const conditions = entry.v.Conditions;
+      if (conditions && conditions.t === 'list') {
+        if (conditions.v.length > MAX_COLUMNS) err(t('v.conditions.tooManyColumns', n, MAX_COLUMNS));
+        conditions.v.forEach((column, ci) => {
+          if (!column || column.t !== 'list') { err(t('v.condition.invalid', n, ci + 1)); return; }
+          if (column.v.length > MAX_CONDITIONS) err(t('v.conditions.tooMany', n, ci + 1));
+          column.v.forEach((condition, condi) => {
+            const cid = condition && condition.v ? strValue(condition.v.Id) : '';
+            if (!cid) err(t('v.condition.noId', n, ci + 1, condi + 1));
+            else if (!condKnown.has(cid)) warn(t('v.condition.unknown', cid));
+          });
+        });
+      }
+    });
+
+    scanStrings(1, state.schedule, 'schedule', err);
+  }
+
+  if (issues.length === 0) {
+    log(t('log.validateOk'), 'ok');
+  } else {
+    log(t('log.validateIssues'));
+    for (const issue of issues) log((issue.level === 'err' ? t('prefix.err') : t('prefix.warn')) + issue.m, issue.level);
+    if (!issues.some((i) => i.level === 'err')) log(t('log.validateWarnOnly'), 'warn');
+  }
+}
+
+function scanStrings(depth, node, path, err) {
+  if (!node) return;
+  if (depth > 16) { err(t('v.depth', path)); return; }
+  if (node.t === 'string') {
+    const value = String(node.v == null ? '' : node.v);
+    if (value.length > MAX_STRING) err(t('v.string.tooLong', path, MAX_STRING));
+    if (value.indexOf('\u00a7') >= 0) err(t('v.string.section', path));
+    for (let i = 0; i < value.length; i++) {
+      if (value.charCodeAt(i) < 0x20) { err(t('v.string.control', path)); break; }
+    }
+  } else if (node.t === 'compound' && node.v) {
+    for (const key of Object.keys(node.v)) scanStrings(depth + 1, node.v[key], path + '.' + key, err);
+  } else if (node.t === 'list' && node.v) {
+    node.v.forEach((child, i) => scanStrings(depth + 1, child, path + '[' + i + ']', err));
+  }
+}
+
+// startup
+applyI18n();
+newScheduleData();
+</script>
+</body>
+</html>

@@ -131,6 +131,13 @@ station.getVersion()
 The peripheral is **read-only** on purpose: dispatching still goes through the map UI / commands with
 permission checks.
 
+## Tools
+
+- [`schedule-editor.html`](schedule-editor.html) — standalone single-file browser editor for schedule JSON
+  (bilingual Chinese/English); works with `/cts getcrn`, `/cts getsch` and `/cts writesch`. No server access,
+  no pasted content is executed.
+- [`COMPATIBILITY.md`](COMPATIBILITY.md) — client × server version compatibility matrix.
+
 ## Building
 
 ```bash
