@@ -6,7 +6,7 @@ A NeoForge 1.21.1 addon for [Create](https://github.com/Creators-of-Create/Creat
 dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map)
 and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
-Current version: **0.0.5-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
+Current version: **0.0.6-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
 
 ## Features
 
@@ -137,7 +137,7 @@ permission checks.
 ./gradlew build
 ```
 
-The jar is written to `build/libs/create_trains_scheduling-0.0.5-alpha-1.21.1Neo-C6.jar`.
+The jar is written to `build/libs/create_trains_scheduling-0.0.6-alpha-1.21.1Neo-C6.jar`.
 
 Development self-checks (`./gradlew runData`) verify the JSON ↔ Schedule round-trip and that all
 mixins apply.
