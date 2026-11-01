@@ -63,4 +63,18 @@
   "create_trains_scheduling.command.perm.revoked": "Revoked %s from %s",
   "create_trains_scheduling.command.perm.list.one": "Permissions of %s: %s",
   "create_trains_scheduling.command.perm.list.header": "Players with explicit permissions (%s):"
+,
+  "create_trains_scheduling.menu.plan_route": "Plan route...",
+  "create_trains_scheduling.dispatch.route.empty": "No stations selected",
+  "create_trains_scheduling.dispatch.route.ambiguous_station": "Station '%s' has a duplicate name; multi-stop routes need unique station names",
+  "create_trains_scheduling.dispatch.route.dispatched": "Route dispatched: %s"
+,
+  "create_trains_scheduling.menu.route.hint": "Left-click: add station · Right-click: undo · Esc: cancel",
+  "create_trains_scheduling.menu.route.summary": "Selected %s stations: %s",
+  "create_trains_scheduling.menu.route.confirm": "Confirm",
+  "create_trains_scheduling.menu.route.cancel": "Cancel"
+,
+  "create_trains_scheduling.dispatch.route.dispatched_waypoint": "Route dispatched (passing %s intermediate stations without stopping): %s"
+,
+  "create_trains_scheduling.menu.status.circuit": "Circuit: line %s · to %s · type %s"
 }

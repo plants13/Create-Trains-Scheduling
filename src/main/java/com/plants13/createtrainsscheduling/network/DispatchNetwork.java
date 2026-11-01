@@ -7,8 +7,10 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.client.CircuitInfoCache;
 import com.plants13.createtrainsscheduling.client.PermissionCache;
 import com.plants13.createtrainsscheduling.client.TrainStatusCache;
+import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
 import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
@@ -43,9 +45,11 @@ public final class DispatchNetwork {
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+        PayloadRegistrar registrar = event.registrar("1").optional();
         registrar.playToServer(SetDestinationPayload.TYPE, SetDestinationPayload.CODEC,
                 DispatchNetwork::handleSetDestination);
+        registrar.playToServer(SetRoutePayload.TYPE, SetRoutePayload.CODEC,
+                DispatchNetwork::handleSetRoute);
         registrar.playToServer(GrantOverridePayload.TYPE, GrantOverridePayload.CODEC,
                 DispatchNetwork::handleGrantOverride);
         registrar.playToServer(SetScheduleEnabledPayload.TYPE, SetScheduleEnabledPayload.CODEC,
@@ -54,6 +58,8 @@ public final class DispatchNetwork {
                 DispatchNetwork::handleRequestStatus);
         registrar.playToClient(TrainStatusPayload.TYPE, TrainStatusPayload.CODEC,
                 DispatchNetwork::handleTrainStatus);
+        registrar.playToClient(CircuitInfoPayload.TYPE, CircuitInfoPayload.CODEC,
+                DispatchNetwork::handleCircuitInfo);
         registrar.playToClient(PlayerPermissionsPayload.TYPE, PlayerPermissionsPayload.CODEC,
                 DispatchNetwork::handlePlayerPermissions);
     }
@@ -85,6 +91,37 @@ public final class DispatchNetwork {
                     player.getServer()
                             .registryAccess(),
                     train, station);
+            reply(player, result.message());
+        });
+    }
+
+    private static void handleSetRoute(SetRoutePayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = serverPlayer(context);
+            if (player == null) {
+                return;
+            }
+            if (!require(player, ModPermission.DISPATCH)) {
+                return;
+            }
+            Train train = Create.RAILWAYS.trains.get(payload.trainId());
+            if (train == null) {
+                reply(player, Component.translatable(PREFIX + "train_not_found"));
+                return;
+            }
+            java.util.List<GlobalStation> stations = new java.util.ArrayList<>();
+            for (java.util.UUID stationId : payload.stationIds()) {
+                GlobalStation station = findStation(train, stationId);
+                if (station == null) {
+                    reply(player, Component.translatable(PREFIX + "station_not_found"));
+                    return;
+                }
+                stations.add(station);
+            }
+            DispatchService.Result result = DispatchService.setRoute(
+                    player.getServer()
+                            .registryAccess(),
+                    train, stations);
             reply(player, result.message());
         });
     }
@@ -161,8 +198,17 @@ public final class DispatchNetwork {
                     overrideTicks = (int) Math.min(Integer.MAX_VALUE, remaining);
                 }
             }
-            PacketDistributor.sendToPlayer(player, new TrainStatusPayload(
-                    train.id, flags, overrideMode, overrideTicks));
+            if (ChannelCheck.canSendTo(player, TrainStatusPayload.TYPE)) {
+                PacketDistributor.sendToPlayer(player, new TrainStatusPayload(
+                        train.id, flags, overrideMode, overrideTicks));
+            }
+            // CRN 交路数据（线路 / 交路终点 / 种类）；CRN 未跟踪该列车时发空串清空旧值
+            CrnBridge.CircuitInfo circuit = CrnBridge.circuitInfo(train.id)
+                    .orElse(new CrnBridge.CircuitInfo("", "", ""));
+            if (ChannelCheck.canSendTo(player, CircuitInfoPayload.TYPE)) {
+                PacketDistributor.sendToPlayer(player, new CircuitInfoPayload(
+                        train.id, circuit.line(), circuit.terminus(), circuit.category()));
+            }
         });
     }
 
@@ -178,9 +224,13 @@ public final class DispatchNetwork {
         context.enqueueWork(() -> PermissionCache.accept(payload));
     }
 
+    private static void handleCircuitInfo(CircuitInfoPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> CircuitInfoCache.accept(payload));
+    }
+
     /** 把玩家的权限同步给客户端（登录、授权/剥夺后调用）。 */
     public static void syncPermissions(ServerPlayer player) {
-        if (player != null) {
+        if (player != null && ChannelCheck.canSendTo(player, PlayerPermissionsPayload.TYPE)) {
             PacketDistributor.sendToPlayer(player, PlayerPermissionsPayload.of(permissionsFor(player)));
         }
     }

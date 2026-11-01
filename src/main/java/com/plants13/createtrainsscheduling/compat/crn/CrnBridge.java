@@ -2,6 +2,9 @@
 
 package com.plants13.createtrainsscheduling.compat.crn;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import de.mrjulsen.crn.api.core.RailwayBackendApi;
 
 /**
@@ -14,6 +17,20 @@ import de.mrjulsen.crn.api.core.RailwayBackendApi;
  * 不会走到这个类。
  */
 public final class CrnBridge {
+
+    /**
+     * CRN 提供的交路信息。
+     *
+     * @param line     线路名（CRN 的 line，可能为空）
+     * @param terminus 交路终点（当前区间的 destination）
+     * @param category 种类（CRN 的 category，可能为空）
+     */
+    public record CircuitInfo(String line, String terminus, String category) {
+
+        public boolean isEmpty() {
+            return line.isBlank() && terminus.isBlank() && category.isBlank();
+        }
+    }
 
     private CrnBridge() {}
 
@@ -30,6 +47,28 @@ public final class CrnBridge {
     /** 已知车站名集合，后端未就绪返回空集合。 */
     public static java.util.Set<String> knownStations() {
         return isActive() ? RailwayBackendApi.getKnownStations() : java.util.Set.of();
+    }
+
+    /**
+     * 读取列车的交路信息（线路 / 交路终点 / 种类）。
+     *
+     * <p>只使用 CRN 的公开 API 快照，不在客户端做任何解析；CRN 未就绪或该列车未被跟踪时返回空。
+     */
+    public static Optional<CircuitInfo> circuitInfo(UUID trainId) {
+        if (!isActive() || trainId == null) {
+            return Optional.empty();
+        }
+        return RailwayBackendApi.getTrain(trainId)
+                .map(snapshot -> new CircuitInfo(
+                        snapshot.line()
+                                .hasName() ? snapshot.line()
+                                        .name() : "",
+                        snapshot.destination()
+                                .isKnown() ? snapshot.destination()
+                                        .displayName() : "",
+                        snapshot.category()
+                                .hasName() ? snapshot.category()
+                                        .name() : ""));
     }
 
     public static String describe() {

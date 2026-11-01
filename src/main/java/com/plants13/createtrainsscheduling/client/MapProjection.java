@@ -57,4 +57,12 @@ public record MapProjection(double cameraX, double cameraZ, double scale,
     public double screenToWorldZ(double screenY) {
         return cameraZ + (screenY - screenHeight / 2.0) / scale;
     }
+
+    public double worldToScreenX(double worldX) {
+        return screenWidth / 2.0 + (worldX - cameraX) * scale;
+    }
+
+    public double worldToScreenY(double worldZ) {
+        return screenHeight / 2.0 + (worldZ - cameraZ) * scale;
+    }
 }

@@ -61,3 +61,7 @@ type="optional"
 versionRange="[1,)"
 ordering="NONE"
 side="CLIENT"
+
+# 注意：Steam 'n' Rails 不在这里声明为依赖。
+# 多站进路的"途经不停车"是在运行时检测 railways:waypoint_destination 指令是否存在，
+# 声明 optional 依赖反而会触发版本范围检查（SnR 版本号是 0.3.0-beta.x），所以不声明。

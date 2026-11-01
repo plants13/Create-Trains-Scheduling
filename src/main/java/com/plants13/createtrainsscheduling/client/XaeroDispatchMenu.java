@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.mojang.blaze3d.platform.Window;
+import com.plants13.createtrainsscheduling.network.CircuitInfoPayload;
 import com.plants13.createtrainsscheduling.network.GrantOverridePayload;
 import com.plants13.createtrainsscheduling.network.SetScheduleEnabledPayload;
 import com.plants13.createtrainsscheduling.network.TrainStatusPayload;
@@ -36,7 +37,8 @@ public final class XaeroDispatchMenu {
     public enum State {
         CLOSED,
         OPEN,
-        PICK_STATION
+        PICK_STATION,
+        ROUTE_PICK
     }
 
     private static final String PREFIX = "create_trains_scheduling.menu.";
@@ -54,6 +56,10 @@ public final class XaeroDispatchMenu {
     private static int panelWidth;
     private static int panelHeight;
     private static final List<Hit> HITS = new ArrayList<>();
+    private static final List<PickedStation> ROUTE_PICKS = new ArrayList<>();
+
+    /** 进路规划时已选的车站（按点击顺序）。 */
+    public record PickedStation(UUID id, String name) {}
 
     private record Item(Component label, boolean enabled, Runnable action) {}
 
@@ -71,6 +77,14 @@ public final class XaeroDispatchMenu {
 
     public static boolean isPicking() {
         return state == State.PICK_STATION;
+    }
+
+    public static boolean isRoutePicking() {
+        return state == State.ROUTE_PICK;
+    }
+
+    public static List<PickedStation> routePicks() {
+        return List.copyOf(ROUTE_PICKS);
     }
 
     public static UUID trainId() {
@@ -91,10 +105,39 @@ public final class XaeroDispatchMenu {
         trainId = null;
         showDetails = false;
         HITS.clear();
+        ROUTE_PICKS.clear();
     }
 
     public static void beginStationPick() {
         state = State.PICK_STATION;
+    }
+
+    // ------------------------------------------------------------------
+    // 多站进路规划
+    // ------------------------------------------------------------------
+
+    public static void beginRoutePick() {
+        state = State.ROUTE_PICK;
+        ROUTE_PICKS.clear();
+    }
+
+    /** 添加一个车站到进路末尾；重复点同一个站直接忽略。 */
+    public static void addRoutePick(UUID stationId, String stationName) {
+        if (stationId == null) {
+            return;
+        }
+        if (ROUTE_PICKS.stream().anyMatch(pick -> pick.id().equals(stationId))) {
+            return;
+        }
+        ROUTE_PICKS.add(new PickedStation(stationId, stationName));
+    }
+
+    /** 撤销最后一个已选车站；返回是否还有剩余。 */
+    public static boolean undoRoutePick() {
+        if (!ROUTE_PICKS.isEmpty()) {
+            ROUTE_PICKS.remove(ROUTE_PICKS.size() - 1);
+        }
+        return !ROUTE_PICKS.isEmpty();
     }
 
     public static void finishStationPick() {
@@ -197,7 +240,15 @@ public final class XaeroDispatchMenu {
             } else {
                 override = Component.translatable(PREFIX + "override.none");
             }
-            drawLine(graphics, mc, Component.translatable(PREFIX + "status.override", override), y, 0xFFB0B0B0);
+            y = drawLine(graphics, mc, Component.translatable(PREFIX + "status.override", override), y, 0xFFB0B0B0);
+
+            // CRN 交路数据：线路 / 交路终点 / 种类
+            CircuitInfoPayload circuit = CircuitInfoCache.get(trainId);
+            String lineValue = circuit == null || circuit.line().isBlank() ? "-" : circuit.line();
+            String terminusValue = circuit == null || circuit.terminus().isBlank() ? "-" : circuit.terminus();
+            String categoryValue = circuit == null || circuit.category().isBlank() ? "-" : circuit.category();
+            drawLine(graphics, mc, Component.translatable(PREFIX + "status.circuit",
+                    lineValue, terminusValue, categoryValue), y, 0xFFB0B0B0);
         }
 
         List<Item> items = buildItems(train);
@@ -229,9 +280,14 @@ public final class XaeroDispatchMenu {
         items.add(new Item(Component.translatable(PREFIX + "set_destination"),
                 PermissionCache.has(ModPermission.DISPATCH) && canAutoRun,
                 XaeroDispatchMenu::beginStationPick));
+        items.add(new Item(Component.translatable(PREFIX + "plan_route"),
+                PermissionCache.has(ModPermission.DISPATCH) && canAutoRun,
+                XaeroDispatchMenu::beginRoutePick));
         items.add(new Item(Component.translatable(PREFIX + "override_next_signal"),
                 PermissionCache.has(ModPermission.OVERRIDE), () -> {
-                    PacketDistributor.sendToServer(new GrantOverridePayload(train.id));
+                    if (ClientChannelCheck.canSendToServer(GrantOverridePayload.TYPE)) {
+                        PacketDistributor.sendToServer(new GrantOverridePayload(train.id));
+                    }
                     close();
                 }));
         items.add(new Item(Component.translatable(PREFIX + (showDetails ? "details_hide" : "details_show")), true,
@@ -240,12 +296,16 @@ public final class XaeroDispatchMenu {
             boolean canSchedule = PermissionCache.has(ModPermission.SCHEDULE);
             if (paused) {
                 items.add(new Item(Component.translatable(PREFIX + "resume_schedule"), canSchedule, () -> {
-                    PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, true));
+                    if (ClientChannelCheck.canSendToServer(SetScheduleEnabledPayload.TYPE)) {
+                        PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, true));
+                    }
                     close();
                 }));
             } else {
                 items.add(new Item(Component.translatable(PREFIX + "disable_schedule"), canSchedule, () -> {
-                    PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, false));
+                    if (ClientChannelCheck.canSendToServer(SetScheduleEnabledPayload.TYPE)) {
+                        PacketDistributor.sendToServer(new SetScheduleEnabledPayload(train.id, false));
+                    }
                     close();
                 }));
             }
@@ -265,7 +325,7 @@ public final class XaeroDispatchMenu {
         for (Item item : items) {
             width = Math.max(width, mc.font.width(item.label()) + PADDING * 3);
         }
-        int lines = 1 + (showDetails ? 3 : 0);
+        int lines = 1 + (showDetails ? 4 : 0);
         int height = PADDING * 2 + (lines + items.size()) * ITEM_HEIGHT;
 
         int x = (int) Math.max(2, Math.min(anchorX, window.getGuiScaledWidth() - width - 2));

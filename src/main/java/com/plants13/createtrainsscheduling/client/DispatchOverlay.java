@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.network.SetDestinationPayload;
+import com.plants13.createtrainsscheduling.network.SetRoutePayload;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.compat.trainmap.TrainMapSync;
 import com.simibubi.create.compat.trainmap.TrainMapSyncClient;
@@ -21,6 +22,7 @@ import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.simibubi.create.content.trains.station.GlobalStation;
+import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
@@ -47,10 +49,46 @@ public final class DispatchOverlay {
 
     private static volatile float lastPartialTicks;
 
+    // 进路规划底部面板的按钮矩形（每帧布局，点击时复用）
+    private static int routeConfirmX;
+    private static int routeConfirmY;
+    private static int routeConfirmW;
+    private static int routeConfirmH;
+    private static int routeCancelX;
+    private static int routeCancelY;
+    private static int routeCancelW;
+    private static int routeCancelH;
+
     private DispatchOverlay() {}
+
+    /**
+     * 跟随 Create 自带的 train map overlay 开关：它关掉时我们也不显示、不响应点击。
+     *
+     * <p>值由客户端 tick 每 tick 刷新一次（20 次/秒）缓存，渲染/点击路径只读 boolean，
+     * 不在帧内反复访问配置对象；地图里拨开关后最多 1 tick（50ms）生效。
+     */
+    private static volatile boolean trainMapOverlayEnabled = true;
+
+    public static boolean isTrainMapOverlayEnabled() {
+        return trainMapOverlayEnabled;
+    }
+
+    /** 由客户端 tick 调用：从 Create 配置同步开关状态。 */
+    public static void refreshConfig() {
+        try {
+            trainMapOverlayEnabled = AllConfigs.client().showTrainMapOverlay.get();
+        } catch (Throwable ignored) {
+            trainMapOverlayEnabled = true;
+        }
+    }
 
     public static void render(GuiGraphics graphics, MapProjection projection, float partialTicks) {
         Minecraft mc = Minecraft.getInstance();
+        if (!isTrainMapOverlayEnabled()) {
+            // 开关关闭时顺手收起菜单，避免"看不见但还能点"的状态
+            XaeroDispatchMenu.close();
+            return;
+        }
         if (projection == null || mc.level == null || CreateClient.RAILWAYS.trackNetworks.isEmpty()) {
             return;
         }
@@ -102,8 +140,8 @@ public final class DispatchOverlay {
             }
         }
 
-        // 选站模式：所有车站加醒目黄框
-        if (XaeroDispatchMenu.isPicking()) {
+        // 选站 / 进路规划模式：所有车站加醒目黄框
+        if (XaeroDispatchMenu.isPicking() || XaeroDispatchMenu.isRoutePicking()) {
             for (TrackGraph graph : CreateClient.RAILWAYS.trackNetworks.values()) {
                 for (GlobalStation station : graph.getPoints(EdgePointType.STATION)) {
                     Vec3 position = stationPosition(graph, station, dimension);
@@ -118,6 +156,11 @@ public final class DispatchOverlay {
         }
         pose.popPose();
 
+        // 多站进路规划：已选站编号 + 底部确认面板（屏幕空间）
+        if (XaeroDispatchMenu.isRoutePicking()) {
+            renderRoutePick(graphics, projection, dimension);
+        }
+
         // 菜单 / 选站提示（屏幕空间）
         XaeroDispatchMenu.render(graphics);
     }
@@ -125,8 +168,15 @@ public final class DispatchOverlay {
     /** 返回 true 表示事件已被消费（调用方应取消原事件）。 */
     public static boolean onClick(MapProjection projection, double guiMouseX, double guiMouseY, int button) {
         Minecraft mc = Minecraft.getInstance();
+        if (!isTrainMapOverlayEnabled()) {
+            return false;
+        }
         if (projection == null || mc.level == null) {
             return false;
+        }
+
+        if (XaeroDispatchMenu.isRoutePicking()) {
+            return handleRoutePickClick(projection, guiMouseX, guiMouseY, button);
         }
 
         if (XaeroDispatchMenu.isPicking()) {
@@ -171,6 +221,161 @@ public final class DispatchOverlay {
         return false;
     }
 
+    // ------------------------------------------------------------------
+    // 多站进路规划
+    // ------------------------------------------------------------------
+
+    private static void renderRoutePick(GuiGraphics graphics, MapProjection projection,
+                                        ResourceKey<Level> dimension) {
+        Minecraft mc = Minecraft.getInstance();
+        List<XaeroDispatchMenu.PickedStation> picks = XaeroDispatchMenu.routePicks();
+
+        // 已选车站：屏幕空间编号
+        for (int i = 0; i < picks.size(); i++) {
+            Vec3 position = findStationPosition(picks.get(i).id(), dimension);
+            if (position == null) {
+                continue;
+            }
+            int sx = (int) Math.round(projection.worldToScreenX(position.x));
+            int sy = (int) Math.round(projection.worldToScreenY(position.z));
+            graphics.fill(sx - 4, sy - 4, sx + 5, sy + 5, 0xCCFFC107);
+            graphics.fill(sx - 5, sy - 5, sx + 6, sy - 4, 0xFFFFC107);
+            graphics.fill(sx - 5, sy + 4, sx + 6, sy + 5, 0xFFFFC107);
+            graphics.fill(sx - 5, sy - 4, sx - 4, sy + 4, 0xFFFFC107);
+            graphics.fill(sx + 4, sy - 4, sx + 6, sy + 4, 0xFFFFC107);
+            graphics.drawString(mc.font, String.valueOf(i + 1), sx + 7, sy - 6, 0xFFFFFFFF, true);
+        }
+
+        int screenWidth = mc.getWindow().getGuiScaledWidth();
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        int panelW = 360;
+        int panelH = 62;
+        int x = (screenWidth - panelW) / 2;
+        int y = screenHeight - panelH - 12;
+        graphics.fill(x, y, x + panelW, y + panelH, 0xE0101010);
+        graphics.fill(x, y, x + panelW, y + 1, 0xFF808080);
+        graphics.fill(x, y + panelH - 1, x + panelW, y + panelH, 0xFF808080);
+        graphics.fill(x, y, x + 1, y + panelH, 0xFF808080);
+        graphics.fill(x + panelW - 1, y, x + panelW, y + panelH, 0xFF808080);
+
+        graphics.drawString(mc.font, net.minecraft.network.chat.Component.translatable(
+                "create_trains_scheduling.menu.route.hint"), x + 10, y + 7, 0xFFB0B0B0, true);
+
+        StringBuilder names = new StringBuilder();
+        for (int i = 0; i < picks.size(); i++) {
+            if (i > 0) {
+                names.append(" -> ");
+            }
+            names.append(picks.get(i).name());
+        }
+        String joined = names.length() > 48 ? names.substring(0, 48) + "…" : names.toString();
+        graphics.drawString(mc.font, net.minecraft.network.chat.Component.translatable(
+                "create_trains_scheduling.menu.route.summary", picks.size(), joined),
+                x + 10, y + 21, 0xFFFFF59D, true);
+
+        int buttonY = y + 38;
+        routeConfirmX = x + 10;
+        routeConfirmY = buttonY;
+        routeConfirmW = 100;
+        routeConfirmH = 16;
+        routeCancelX = x + 120;
+        routeCancelY = buttonY;
+        routeCancelW = 80;
+        routeCancelH = 16;
+
+        boolean confirmEnabled = !picks.isEmpty();
+        int mouseX = (int) (mc.mouseHandler.xpos() * screenWidth / mc.getWindow().getScreenWidth());
+        int mouseY = (int) (mc.mouseHandler.ypos() * screenHeight / mc.getWindow().getScreenHeight());
+        drawButton(graphics, mc, routeConfirmX, routeConfirmY, routeConfirmW, routeConfirmH,
+                net.minecraft.network.chat.Component.translatable(
+                        "create_trains_scheduling.menu.route.confirm"),
+                confirmEnabled, mouseX, mouseY);
+        drawButton(graphics, mc, routeCancelX, routeCancelY, routeCancelW, routeCancelH,
+                net.minecraft.network.chat.Component.translatable(
+                        "create_trains_scheduling.menu.route.cancel"),
+                true, mouseX, mouseY);
+    }
+
+    private static void drawButton(GuiGraphics graphics, Minecraft mc, int x, int y, int w, int h,
+                                   net.minecraft.network.chat.Component label, boolean enabled,
+                                   int mouseX, int mouseY) {
+        boolean hovered = enabled && mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+        graphics.fill(x, y, x + w, y + h, hovered ? 0xFF4C6E30 : 0xFF2A2A2A);
+        graphics.fill(x, y, x + w, y + 1, 0xFF808080);
+        graphics.fill(x, y + h - 1, x + w, y + h, 0xFF808080);
+        graphics.fill(x, y, x + 1, y + h, 0xFF808080);
+        graphics.fill(x + w - 1, y, x + w, y + h, 0xFF808080);
+        graphics.drawString(mc.font, label, x + (w - mc.font.width(label)) / 2, y + 4,
+                enabled ? 0xFFE0E0E0 : 0xFF707070, true);
+    }
+
+    private static boolean handleRoutePickClick(MapProjection projection, double guiMouseX,
+                                                double guiMouseY, int button) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return false;
+        }
+        // 右键：撤销最后一个车站（消费，避免触发其他右键行为）
+        if (button == 1) {
+            if (!XaeroDispatchMenu.undoRoutePick()) {
+                XaeroDispatchMenu.close();
+            }
+            return true;
+        }
+        if (button != 0) {
+            return false;
+        }
+        if (inside(guiMouseX, guiMouseY, routeCancelX, routeCancelY, routeCancelW, routeCancelH)) {
+            XaeroDispatchMenu.close();
+            return true;
+        }
+        if (inside(guiMouseX, guiMouseY, routeConfirmX, routeConfirmY, routeConfirmW, routeConfirmH)) {
+            sendRoute();
+            return true;
+        }
+        double worldMouseX = projection.screenToWorldX(guiMouseX);
+        double worldMouseZ = projection.screenToWorldZ(guiMouseY);
+        GlobalStation station = findStationAt(worldMouseX, worldMouseZ, mc.level.dimension());
+        if (station != null) {
+            XaeroDispatchMenu.addRoutePick(station.id, station.name);
+            return true;
+        }
+        // 点在空白处：不消费事件，让地图可以正常拖动
+        return false;
+    }
+
+    private static boolean inside(double mouseX, double mouseY, int x, int y, int w, int h) {
+        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+    }
+
+    private static void sendRoute() {
+        List<XaeroDispatchMenu.PickedStation> picks = XaeroDispatchMenu.routePicks();
+        UUID trainId = XaeroDispatchMenu.trainId();
+        if (trainId != null && !picks.isEmpty()
+                && ClientChannelCheck.canSendToServer(SetRoutePayload.TYPE)) {
+            List<UUID> ids = new ArrayList<>();
+            for (XaeroDispatchMenu.PickedStation pick : picks) {
+                ids.add(pick.id());
+            }
+            PacketDistributor.sendToServer(new SetRoutePayload(trainId, ids));
+        }
+        XaeroDispatchMenu.close();
+    }
+
+    private static Vec3 findStationPosition(UUID stationId, ResourceKey<Level> dimension) {
+        if (stationId == null) {
+            return null;
+        }
+        for (TrackGraph graph : CreateClient.RAILWAYS.trackNetworks.values()) {
+            for (GlobalStation station : graph.getPoints(EdgePointType.STATION)) {
+                if (stationId.equals(station.id)) {
+                    return stationPosition(graph, station, dimension);
+                }
+            }
+        }
+        return null;
+    }
+
     private static boolean tryPickStation(MapProjection projection, double guiMouseX, double guiMouseY) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
@@ -183,7 +388,7 @@ public final class DispatchOverlay {
             return false;
         }
         UUID targetTrain = XaeroDispatchMenu.trainId();
-        if (targetTrain != null) {
+        if (targetTrain != null && ClientChannelCheck.canSendToServer(SetDestinationPayload.TYPE)) {
             PacketDistributor.sendToServer(new SetDestinationPayload(targetTrain, station.id));
         }
         CreateTrainsScheduling.LOGGER.info("[CTS] station picked from map: {}", station.name);

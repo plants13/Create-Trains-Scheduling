@@ -115,6 +115,42 @@ public final class DispatchService {
         return Result.ok(Mode.NATIVE, Component.translatable(PREFIX + "schedule.disabled_manual"));
     }
 
+    /**
+     * 多站进路：按顺序下发一整条站点序列。
+     *
+     * <p>多站必须走原生 {@code DestinationInstruction}（按站名匹配），所以只要有任何一站
+     * 站名在本轨道网络上不唯一，就拒绝下发，避免列车去错站；单站仍然可以走精确导航回退。
+     */
+    public static Result setRoute(HolderLookup.Provider registries, Train train, List<GlobalStation> stations) {
+        if (stations == null || stations.isEmpty()) {
+            return Result.fail(Component.translatable(PREFIX + "route.empty"));
+        }
+        if (!canRunAutomatically(train)) {
+            return Result.fail(Component.translatable(PREFIX + "no_conductor"));
+        }
+        if (train.graph == null) {
+            return Result.fail(Component.translatable(PREFIX + "no_graph"));
+        }
+        for (GlobalStation station : stations) {
+            if (isAmbiguous(train, station.name)) {
+                return Result.fail(Component.translatable(PREFIX + "route.ambiguous_station", station.name));
+            }
+        }
+        List<String> names = stations.stream()
+                .map(station -> station.name)
+                .toList();
+        Schedule schedule = RouteBuilder.oneOff(registries, names, true);
+        train.runtime.setSchedule(schedule, true);
+        OneOffScheduleTracker.markDispatched(train);
+        String joined = String.join(" -> ", names);
+        if (names.size() > 1 && RouteBuilder.hasWaypointInstruction()) {
+            return Result.ok(Mode.NATIVE, Component.translatable(PREFIX + "route.dispatched_waypoint",
+                    names.size() - 1, joined));
+        }
+        return Result.ok(Mode.NATIVE,
+                Component.translatable(PREFIX + "route.dispatched", joined));
+    }
+
     /** 站名是否在该列车的轨道网络上不唯一（或不适合按名字匹配）。 */
     public static boolean isAmbiguous(Train train, String name) {
         if (name == null || name.isBlank()) {

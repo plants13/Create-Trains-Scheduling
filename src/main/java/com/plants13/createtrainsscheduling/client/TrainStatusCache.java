@@ -24,7 +24,7 @@ public final class TrainStatusCache {
     private TrainStatusCache() {}
 
     public static void request(UUID trainId) {
-        if (trainId != null) {
+        if (trainId != null && ClientChannelCheck.canSendToServer(RequestTrainStatusPayload.TYPE)) {
             PacketDistributor.sendToServer(new RequestTrainStatusPayload(trainId));
         }
     }

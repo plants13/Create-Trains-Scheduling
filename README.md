@@ -6,17 +6,21 @@ A NeoForge 1.21.1 addon for [Create](https://github.com/Creators-of-Create/Creat
 dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map)
 and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
-Current version: **0.0.2-alpha**.
+Current version: **0.0.3-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
 
 ## Features
 
-- **Map overlay** (Xaero's World Map and JourneyMap) — station markers and per-carriage train highlight
+- **Map overlay** (Xaero's World Map and JourneyMap) — station markers and per-carriage train highlight;
+  the overlay follows Create's own train map overlay toggle
 - **Click a train on the map** to open the dispatch menu:
   - **Set destination** — pick a station on the map; the destination is dispatched by station UUID,
     so duplicate station names can never send the train to the wrong station
+  - **Plan route** — click several stations in order and confirm; intermediate stations are *passed
+    through without stopping* when Steam 'n' Rails is installed (falls back to normal stops otherwise)
   - **Allow passing next red signal** — event-based: the grant expires right after the train actually
     passes a signal
-  - **Show status** — server-authoritative state (can run automatically / has schedule / paused / override state)
+  - **Show status** — server-authoritative state (can run automatically / has schedule / paused /
+    override state) plus CRN circuit data (line / terminus / category)
   - **Disable schedule** — manually placed schedules are only *interrupted* (paused and kept);
     auto schedules created by this mod are cleared
   - **Resume schedule** — continues an interrupted schedule
@@ -34,6 +38,7 @@ Current version: **0.0.2-alpha**.
 | Create Railways Navigator | 0.10.0-C6+ (**hard dependency**) |
 | DragonLib | 3.0.28+ (dependency of CRN) |
 | Xaero's World Map **or** JourneyMap | 1.21.1, client only, optional (needed for the map UI) |
+| Steam 'n' Rails | optional, needed for pass-through waypoints |
 | Java | 21 |
 
 ## Installation
@@ -89,15 +94,17 @@ The legacy `forceReleasePlayers` config entry still counts as `override`.
 ./gradlew build
 ```
 
-The jar is written to `build/libs/create_trains_scheduling-0.0.2-alpha.jar`.
+The jar is written to `build/libs/create_trains_scheduling-0.0.3-alpha-1.21.1Neo-C6.jar`.
 
 Development self-checks (`./gradlew runData`) verify the JSON ↔ Schedule round-trip and that all
 mixins apply.
 
 ## Known limitations (alpha)
 
-- When a station name is duplicated on a train's track network, the destination falls back to exact
-  navigation — Create/CRN schedule displays will not show that trip.
+- When a station name is duplicated on a train's track network, a single destination falls back to
+  exact navigation (Create/CRN schedule displays will not show that trip), while multi-stop routes
+  refuse to dispatch until the affected station is renamed.
+- Pass-through waypoints require Steam 'n' Rails; without it intermediate stations are normal stops.
 - Alpha software: back up your worlds.
 
 ## License

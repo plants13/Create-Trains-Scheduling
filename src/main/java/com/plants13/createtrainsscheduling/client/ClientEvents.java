@@ -74,6 +74,13 @@ public final class ClientEvents {
             // Create 内部实现变动时忽略
         }
 
+        DispatchOverlay.refreshConfig();
+
+        // Create 的 train map overlay 开关关闭时，收起残留菜单
+        if (XaeroDispatchMenu.isActive() && !DispatchOverlay.isTrainMapOverlayEnabled()) {
+            XaeroDispatchMenu.close();
+        }
+
         // 菜单打开期间定期刷新列车真实状态（服务端权威）
         if (XaeroDispatchMenu.isActive()) {
             if (++statusRefreshTicks >= 20) {

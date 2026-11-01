@@ -34,5 +34,12 @@ jar. No source code from them has been copied into this project.
   JourneyMap is proprietary. Its official addon API is used at compile time only (and as an optional
   runtime soft dependency); no JourneyMap classes are bundled or copied.
 
+- Steam 'n' Rails (SnR)
+  https://github.com/Layers-of-Railways/Railway
+  GNU Lesser General Public License v3.0. Optional runtime integration only: when SnR is installed,
+  this mod looks up SnR's public schedule instruction id ("railways:waypoint_destination") through
+  Create's instruction registry to build pass-through waypoint entries. No SnR classes are imported,
+  bundled, or copied; if SnR is absent the feature falls back to normal stops.
+
 - ComputerCraft / CC:Tweaked
   Compute API planned for a future integration. Not currently used.
