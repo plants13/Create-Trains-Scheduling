@@ -28,15 +28,26 @@
 | JourneyMap | 1.20.1-5.9.18（客户端） | **没有 `journeymap.api.v2`**，需按旧 API v1 单独实现 |
 | Java | 17 | 1.20.1 运行时 |
 
-### 目标 B：1.20.1 + Create 0.5.1（legacy）
+### 目标 B：1.20.1 + Create 0.5.1（legacy，分支 `1.20.1Forge-C0.5`）
 
-| 组件 | 版本 |
-| --- | --- |
-| Create | 1.20.1-0.5.1.j |
-| CRN | 0.5.3-beta-1.20.1-forge（旧 API，不是 `RailwayBackendApi`） |
-| SnR | 0.5.x（Create 0.5 线） |
+已用实际测试实例（`D:\.minecraft\versions\新岛铁道 v1.5.1`）的 jar 核实：
 
-成本显著更高：Create 0.5 的调度/信号 API 与 6.0 不同，CRN 旧 API 也不兼容；建议作为后置的独立分支。
+| 组件 | 版本 | 核验结果 |
+| --- | --- | --- |
+| Forge | 1.20.1-47.4.6 | 实例 `fmlloader` 版本 |
+| Create | 1.20.1-0.5.1.j | 实例 mods |
+| CRN | 1.20.1-beta-0.8.4 | **旧 API 极小**：只有 `IPredictableWaitCondition` 与 `api.client.Screens`，**没有 `RailwayBackendApi`** |
+| SnR | 1.6.7+forge-mc1.20.1 | 含 `WaypointDestinationInstruction` → 途经不停车可用 |
+| Xaero / JourneyMap | 未安装 | 该整合包没有全屏地图 mod；地图 UI 需另行安装才能测 |
+| CC:Tweaked | 未安装 | CC 桥在该包不可测，除非临时加装 |
+
+结论：
+
+- **Create 0.5 legacy 线上拿不到 CRN 交路数据**（0.8.4 没有公开列车/旅程 API）。可选：
+  1. 1.20.1 + Create 0.5 版本**砍掉 CRN 交路显示**；
+  2. 反射 CRN 内部类，升级即碎，不建议；
+  3. 若坚持要交路数据，走目标 A（1.20.1 + Create 6 + CRN 0.10-C6），而不是 Create 0.5。
+- 其余功能（单站/多站进路、越红灯、权限、手动时刻表打断、SnR 途经不停车）与 Create 6 版本逻辑一致，差异集中在 Create 0.5 的调度/信号类。
 
 ## 3. 关键结论
 
