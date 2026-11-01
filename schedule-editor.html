@@ -185,7 +185,22 @@ const I18N = {
     'v.string.tooLong': '%s 字符串过长（> %s）',
     'v.string.section': '%s 含 § 格式化符',
     'v.string.control': '%s 含控制字符',
-    'v.depth': '%s 嵌套过深'
+    'v.depth': '%s 嵌套过深',
+    'crn.section': 'CRN 交路区间（travel_section）',
+    'crn.category': '列车种类：',
+    'crn.line': '列车线路：',
+    'crn.usable': '区间可用',
+    'crn.includePrev': '包含前一站',
+    'crn.none': '（无）',
+    'crn.unknown': '未知 id',
+    'crn.loadCatalog': '加载目录（/cts getcrn）后可在这里用下拉框选择线路/种类；当前先显示原始字段。',
+    'instr.create:destination': '目的地',
+    'instr.create:rename': '改名',
+    'instr.create:throttle': '限速',
+    'instr.create:package_retrieval': '取包裹',
+    'instr.create:package_delivery': '送包裹',
+    'instr.railways:waypoint_destination': '途经点',
+    'instr.createrailwaysnavigator:travel_section': 'CRN 交路区间'
   },  en: {
     'title': 'Create: Trains Scheduling — Schedule Editor',
     'subtitle': 'Local single-file tool: no network access, no pasted content is ever executed. Flow: /cts getcrn copies the catalog, /cts getsch copies the schedule -> import here -> edit -> copy the JSON -> /cts writesch in game.',
@@ -268,7 +283,22 @@ const I18N = {
     'v.string.tooLong': '%s is too long (> %s)',
     'v.string.section': '%s contains the § formatting sign',
     'v.string.control': '%s contains control characters',
-    'v.depth': '%s is nested too deeply'
+    'v.depth': '%s is nested too deeply',
+    'crn.section': 'CRN travel section (travel_section)',
+    'crn.category': 'Train category:',
+    'crn.line': 'Train line:',
+    'crn.usable': 'Section usable',
+    'crn.includePrev': 'Include previous station',
+    'crn.none': '(none)',
+    'crn.unknown': 'Unknown id',
+    'crn.loadCatalog': 'Load the catalog (/cts getcrn) to pick lines/categories with dropdowns; raw fields are shown for now.',
+    'instr.create:destination': 'Destination',
+    'instr.create:rename': 'Rename',
+    'instr.create:throttle': 'Throttle',
+    'instr.create:package_retrieval': 'Fetch packages',
+    'instr.create:package_delivery': 'Deliver packages',
+    'instr.railways:waypoint_destination': 'Waypoint',
+    'instr.createrailwaysnavigator:travel_section': 'CRN travel section'
   }
 };
 
@@ -304,6 +334,185 @@ function applyI18n() {
   document.getElementById('log').textContent = '';
   log(t('log.ready'));
   renderAll();
+}
+
+// ---------------------------------------------------------------------------
+// CRN travel_section helpers (UUID intArray <-> readable line/category names)
+// ---------------------------------------------------------------------------
+
+const CRN_TRAVEL_SECTION = 'createrailwaysnavigator:travel_section';
+const CRN_SKIP_KEYS = ['TrainCategory', 'TrainLine', 'Usable', 'IncludePreviousStation'];
+
+function instructionLabel(id) {
+  const key = 'instr.' + id;
+  const table = I18N[lang] || I18N.en;
+  if (table[key] != null) return table[key];
+  if (I18N.en[key] != null) return I18N.en[key];
+  return id;
+}
+
+function uuidFromIntArray(arr) {
+  if (!Array.isArray(arr) || arr.length !== 4) return null;
+  try {
+    const most = BigInt.asUintN(64, (BigInt(arr[0]) << 32n) | BigInt(arr[1] >>> 0));
+    const least = BigInt.asUintN(64, (BigInt(arr[2]) << 32n) | BigInt(arr[3] >>> 0));
+    const hex = most.toString(16).padStart(16, '0') + least.toString(16).padStart(16, '0');
+    return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+  } catch (e) {
+    return null;
+  }
+}
+
+function intArrayFromUuid(uuid) {
+  const hex = String(uuid == null ? '' : uuid).replace(/-/g, '').toLowerCase();
+  if (!/^[0-9a-f]{32}$/.test(hex)) return null;
+  const most = BigInt('0x' + hex.slice(0, 16));
+  const least = BigInt('0x' + hex.slice(16));
+  return [
+    Number(BigInt.asIntN(32, most >> 32n)), Number(BigInt.asIntN(32, most)),
+    Number(BigInt.asIntN(32, least >> 32n)), Number(BigInt.asIntN(32, least))
+  ];
+}
+
+function catalogEntries(kind) {
+  if (!state.catalog) return [];
+  return kind === 'lines' ? state.catalog.lines : state.catalog.categories;
+}
+
+function catalogNameForUuid(uuid) {
+  if (!uuid) return null;
+  const target = String(uuid).toLowerCase();
+  for (const kind of ['lines', 'categories']) {
+    for (const entry of catalogEntries(kind)) {
+      if (entry && entry.id && String(entry.id).toLowerCase() === target) return entry.name || null;
+    }
+  }
+  return null;
+}
+
+function resolveIntArrayName(node) {
+  if (!node || node.t !== 'intArray') return null;
+  return catalogNameForUuid(uuidFromIntArray(node.v));
+}
+
+function readCrnUuid(data, key) {
+  const node = data.v[key];
+  if (!node || node.t !== 'intArray') return null;
+  return uuidFromIntArray(node.v);
+}
+
+function fillCatalogSelect(select, kind, currentId) {
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = t('crn.none');
+  select.appendChild(none);
+  const seen = new Set();
+  for (const item of catalogEntries(kind)) {
+    if (!item || !item.id) continue;
+    const id = String(item.id);
+    if (seen.has(id.toLowerCase())) continue;
+    seen.add(id.toLowerCase());
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = (item.name || id) + '  (' + id.slice(0, 8) + '…)';
+    select.appendChild(opt);
+  }
+  if (currentId && !seen.has(String(currentId).toLowerCase())) {
+    const opt = document.createElement('option');
+    opt.value = currentId;
+    opt.textContent = currentId + '  (' + t('crn.unknown') + ')';
+    select.appendChild(opt);
+  }
+  if (currentId) {
+    for (const opt of select.options) {
+      if (opt.value && opt.value.toLowerCase() === String(currentId).toLowerCase()) opt.selected = true;
+    }
+  }
+}
+
+function renderCrnSection(entry, data) {
+  const box = document.createElement('div');
+  box.className = 'col';
+  const title = document.createElement('div');
+  title.className = 'row';
+  const label = document.createElement('span');
+  label.className = 'muted small';
+  label.textContent = t('crn.section');
+  title.appendChild(label);
+  box.appendChild(title);
+
+  const canFriendly = !!state.catalog && (catalogEntries('lines').length > 0 || catalogEntries('categories').length > 0);
+  if (!canFriendly) {
+    const hint = document.createElement('div');
+    hint.className = 'muted small';
+    hint.textContent = t('crn.loadCatalog');
+    box.appendChild(hint);
+    return box;
+  }
+
+  const categoryId = readCrnUuid(data, 'TrainCategory');
+  const catRow = document.createElement('div');
+  catRow.className = 'row';
+  const catLabel = document.createElement('span');
+  catLabel.className = 'muted small';
+  catLabel.textContent = t('crn.category');
+  catRow.appendChild(catLabel);
+  const catSel = document.createElement('select');
+  fillCatalogSelect(catSel, 'categories', categoryId);
+  catSel.onchange = () => {
+    if (!catSel.value) { delete data.v.TrainCategory; }
+    else {
+      const encoded = intArrayFromUuid(catSel.value);
+      if (encoded) data.v.TrainCategory = { t: 'intArray', v: encoded };
+      else log(t('crn.unknown'), 'warn');
+    }
+    renderAll();
+  };
+  catRow.appendChild(catSel);
+  box.appendChild(catRow);
+
+  const lineId = readCrnUuid(data, 'TrainLine');
+  const lineRow = document.createElement('div');
+  lineRow.className = 'row';
+  const lineLabel = document.createElement('span');
+  lineLabel.className = 'muted small';
+  lineLabel.textContent = t('crn.line');
+  lineRow.appendChild(lineLabel);
+  const lineSel = document.createElement('select');
+  fillCatalogSelect(lineSel, 'lines', lineId);
+  lineSel.onchange = () => {
+    if (!lineSel.value) { delete data.v.TrainLine; }
+    else {
+      const encoded = intArrayFromUuid(lineSel.value);
+      if (encoded) data.v.TrainLine = { t: 'intArray', v: encoded };
+      else log(t('crn.unknown'), 'warn');
+    }
+    renderAll();
+  };
+  lineRow.appendChild(lineSel);
+  box.appendChild(lineRow);
+
+  const usableRow = document.createElement('label');
+  usableRow.className = 'row';
+  const usableBox = document.createElement('input');
+  usableBox.type = 'checkbox';
+  usableBox.checked = nodeValue(data.v.Usable, 1) !== 0;
+  usableBox.onchange = () => { data.v.Usable = N.byte(usableBox.checked ? 1 : 0); renderAll(); };
+  usableRow.appendChild(usableBox);
+  usableRow.appendChild(document.createTextNode(' ' + t('crn.usable')));
+  box.appendChild(usableRow);
+
+  const prevRow = document.createElement('label');
+  prevRow.className = 'row';
+  const prevBox = document.createElement('input');
+  prevBox.type = 'checkbox';
+  prevBox.checked = nodeValue(data.v.IncludePreviousStation, 0) !== 0;
+  prevBox.onchange = () => { data.v.IncludePreviousStation = N.byte(prevBox.checked ? 1 : 0); renderAll(); };
+  prevRow.appendChild(prevBox);
+  prevRow.appendChild(document.createTextNode(' ' + t('crn.includePrev')));
+  box.appendChild(prevRow);
+
+  return box;
 }
 
 // ---------------------------------------------------------------------------
@@ -543,12 +752,12 @@ function conditionOptions(current) {
   return list;
 }
 
-function makeSelect(options, current, onChange) {
+function makeSelect(options, current, onChange, labelFn) {
   const sel = document.createElement('select');
   for (const value of options) {
     const opt = document.createElement('option');
     opt.value = value;
-    opt.textContent = value;
+    opt.textContent = labelFn ? labelFn(value) : value;
     if (value === current) opt.selected = true;
     sel.appendChild(opt);
   }
@@ -615,7 +824,7 @@ function renderEntry(entry, index) {
   head.appendChild(makeSelect(instructionOptions(strValue(instr.v.Id)), strValue(instr.v.Id), (value) => {
     instr.v.Id = N.string(value);
     renderAll();
-  }));
+  }, instructionLabel));
   const spacer = document.createElement('span');
   spacer.className = 'spacer';
   head.appendChild(spacer);
@@ -652,12 +861,22 @@ function renderEntry(entry, index) {
   textRow.appendChild(textInput);
   card.appendChild(textRow);
 
+  const instrId = strValue(instr.v.Id);
+  const legacyCrn = !!((data.v.TrainGroup && data.v.TrainGroup.t === 'string') ||
+      (data.v.TrainCategory && data.v.TrainCategory.t === 'string') ||
+      (data.v.TrainLine && data.v.TrainLine.t === 'string'));
+  const crnFriendly = instrId === CRN_TRAVEL_SECTION && !legacyCrn && !!state.catalog &&
+      (catalogEntries('lines').length > 0 || catalogEntries('categories').length > 0);
+  if (instrId === CRN_TRAVEL_SECTION && !legacyCrn) {
+    card.appendChild(renderCrnSection(entry, data));
+  }
+
   const dataTitle = document.createElement('div');
   dataTitle.className = 'muted small';
   dataTitle.style.marginTop = '8px';
   dataTitle.textContent = t('data.otherLabel');
   card.appendChild(dataTitle);
-  card.appendChild(renderDataTable(data, true));
+  card.appendChild(renderDataTable(data, true, crnFriendly ? CRN_SKIP_KEYS : null));
 
   const condTitle = document.createElement('div');
   condTitle.className = 'row';
@@ -745,7 +964,7 @@ function renderConditionColumn(entry, column, entryIndex, colIndex) {
   return col;
 }
 
-function renderDataTable(dataCompound, allowAdd) {
+function renderDataTable(dataCompound, allowAdd, skipKeys) {
   const table = document.createElement('table');
   table.className = 'data';
   if (!dataCompound || dataCompound.t !== 'compound') {
@@ -759,6 +978,7 @@ function renderDataTable(dataCompound, allowAdd) {
   }
   const obj = dataCompound.v;
   for (const key of Object.keys(obj)) {
+    if (skipKeys && skipKeys.indexOf(key) >= 0) continue;
     const node = obj[key];
     const tr = document.createElement('tr');
     const kd = document.createElement('td');
@@ -781,6 +1001,13 @@ function renderDataTable(dataCompound, allowAdd) {
 
     const tdValue = document.createElement('td');
     tdValue.appendChild(renderNodeEditor(node, (updated) => { obj[key] = updated; renderAll(); }));
+    const resolved = resolveIntArrayName(node);
+    if (resolved) {
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'muted small';
+      nameSpan.textContent = ' → ' + resolved;
+      tdValue.appendChild(nameSpan);
+    }
     tr.appendChild(tdValue);
 
     const tdDel = document.createElement('td');
