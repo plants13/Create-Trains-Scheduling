@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0.50,6.1)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -52,6 +53,11 @@ minecraft {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+mixin {
+    add sourceSets.main, "create_trains_scheduling.refmap.json"
+    config "create_trains_scheduling.mixins.json"
+}
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -69,6 +75,8 @@ dependencies {
 
     // Create 0.5.1.j (hard dependency, provided at runtime by the server pack)
     implementation fg.deobf("maven.modrinth:create:${create_modrinth_version}")
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 // Expand mods.toml placeholders from gradle.properties
