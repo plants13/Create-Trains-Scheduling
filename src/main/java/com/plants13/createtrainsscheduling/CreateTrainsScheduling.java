@@ -34,6 +34,12 @@ public class CreateTrainsScheduling {
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
+        // 软依赖：装了 CC:Tweaked 才加载桥接类（不打包、不硬依赖）
+        if (net.neoforged.fml.ModList.get()
+                .isLoaded("computercraft")) {
+            com.plants13.createtrainsscheduling.compat.cc.CcCompat.register(modEventBus);
+        }
+
         runStartupSelfChecks();
     }
 

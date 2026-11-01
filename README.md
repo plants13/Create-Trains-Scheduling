@@ -26,6 +26,7 @@ Current version: **0.0.3b-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cr
   - **Resume schedule** — continues an interrupted schedule
 - **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
 - **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts perm`, `/cts selftest`
+- **ComputerCraft bridge** (optional) — a read-only `cts_station` peripheral on Create station blocks, exposing trains, schedules and CRN circuit data to Lua
 - **Languages** — English and 简体中文
 
 ## Requirements
@@ -39,6 +40,7 @@ Current version: **0.0.3b-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cr
 | DragonLib | 3.0.28+ (dependency of CRN) |
 | Xaero's World Map **or** JourneyMap | 1.21.1, client only, optional (needed for the map UI) |
 | Steam 'n' Rails | optional, needed for pass-through waypoints |
+| ComputerCraft / CC:Tweaked | optional, enables the `cts_station` peripheral |
 | Java | 21 |
 
 ## Installation
@@ -87,6 +89,31 @@ the following per player (stored in the world save, survives restarts):
 - `schedule` — disable / resume / clear schedules
 
 The legacy `forceReleasePlayers` config entry still counts as `override`.
+
+### ComputerCraft bridge
+
+With CC:Tweaked installed, every Create station block exposes a read-only peripheral of type
+`cts_station` (no new blocks or items — it is attached to Create's own station block entity):
+
+```lua
+local station = peripheral.find("cts_station")
+print(station.getStationName())
+
+for _, train in ipairs(station.getTrains()) do
+  print(train.name, train.line, train.terminus, train.category, train.hasSchedule)
+end
+
+station.getTrain("车名或UUID")       -- single train status (includes CRN line / terminus / category)
+station.getSchedule("车名或UUID")    -- schedule instructions in order
+station.getCircuit("车名或UUID")     -- CRN circuit: line / terminus / category
+station.getTrainsAtStation()         -- trains currently standing at this station
+
+-- events
+local event, trainName, stationName = os.pullEvent("cts_train_arrival")
+```
+
+The peripheral is **read-only** on purpose: dispatching still goes through the map UI / commands with
+permission checks.
 
 ## Building
 

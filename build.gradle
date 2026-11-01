@@ -97,6 +97,9 @@ dependencies {
     implementation("de.mrjulsen.mcdragonlib:dragonlib-neoforge:1.21.1-beta-3.0.28")
     implementation("maven.modrinth:create-railways-navigator:rlsRwxq3")
 
+    // ComputerCraft / CC:Tweaked（运行时可选，不打包、不硬依赖）
+    compileOnly("maven.modrinth:cc-tweaked:1ewzHZYg")
+
     // 客户端软集成：JourneyMap API（不打包、不硬依赖）
     compileOnly("info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1")
 

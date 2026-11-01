@@ -42,4 +42,8 @@ jar. No source code from them has been copied into this project.
   bundled, or copied; if SnR is absent the feature falls back to normal stops.
 
 - ComputerCraft / CC:Tweaked
-  Compute API planned for a future integration. Not currently used.
+  https://github.com/cc-tweaked/CC-Tweaked
+  Used at compile time against its public peripheral/Lua API, and as an optional runtime soft
+  dependency. No CC:T code is copied or bundled. See the CC:Tweaked project for its own license.
+  The integration adds no blocks or items: it attaches a read-only peripheral to Create's existing
+  station block entity.
