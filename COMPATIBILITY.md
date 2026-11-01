@@ -1,5 +1,7 @@
 # Version Compatibility (Client × Server)
 
+[简体中文](COMPATIBILITY_ZH.md)
+
 This table describes **inter-version compatibility of this mod only** (Minecraft 1.21.1 / NeoForge build).
 It answers one question: if a client and a server run different versions of this mod, can the client join,
 and which features stop working?

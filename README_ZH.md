@@ -97,7 +97,7 @@
 4. `/cts writesch` —— 读取剪贴板并写入手持时刻表物品
 
 客户端与服务端都需要 0.0.6 或更新版本，剪贴板通道才存在；版本混用的说明见
-[COMPATIBILITY.md](COMPATIBILITY.md)。
+[COMPATIBILITY_ZH.md](COMPATIBILITY_ZH.md)。
 
 **安全：** 剪贴板内容始终按不可信 JSON 数据处理 —— 绝不会被当作命令执行。写入前，服务端会强制校验
 `schedule` 权限、每玩家冷却、15 秒一次性 token（只有显式执行 `/cts writesch` 后才能回传剪贴板内容）、
