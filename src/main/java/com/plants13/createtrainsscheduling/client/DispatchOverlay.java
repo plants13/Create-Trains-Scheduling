@@ -49,6 +49,9 @@ public final class DispatchOverlay {
 
     private static volatile float lastPartialTicks;
 
+    /** 最近一次世界层渲染用到的投影，屏幕层（菜单/面板）复用它。 */
+    private static volatile MapProjection lastProjection;
+
     // 进路规划底部面板的按钮矩形（每帧布局，点击时复用）
     private static int routeConfirmX;
     private static int routeConfirmY;
@@ -93,6 +96,7 @@ public final class DispatchOverlay {
             return;
         }
         lastPartialTicks = partialTicks;
+        lastProjection = projection;
 
         ResourceKey<Level> dimension = mc.level.dimension();
         Window window = mc.getWindow();
@@ -155,13 +159,27 @@ public final class DispatchOverlay {
             }
         }
         pose.popPose();
+    }
 
-        // 多站进路规划：已选站编号 + 底部确认面板（屏幕空间）
-        if (XaeroDispatchMenu.isRoutePicking()) {
-            renderRoutePick(graphics, projection, dimension);
+    /**
+     * 屏幕空间层：菜单、选站提示、进路确认面板。
+     *
+     * <p>必须在地图 Screen 完全渲染完之后调用（{@code ScreenEvent.Render.Post}），否则会被
+     * Create 自带的 train map overlay 盖住。
+     */
+    public static void renderScreenLayer(GuiGraphics graphics) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!isTrainMapOverlayEnabled()) {
+            XaeroDispatchMenu.close();
+            return;
         }
-
-        // 菜单 / 选站提示（屏幕空间）
+        MapProjection projection = lastProjection;
+        if (projection == null || mc.level == null) {
+            return;
+        }
+        if (XaeroDispatchMenu.isRoutePicking()) {
+            renderRoutePick(graphics, projection, mc.level.dimension());
+        }
         XaeroDispatchMenu.render(graphics);
     }
 

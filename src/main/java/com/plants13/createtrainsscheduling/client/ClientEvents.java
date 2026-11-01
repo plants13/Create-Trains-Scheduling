@@ -40,6 +40,15 @@ public final class ClientEvents {
         XaeroOverlay.onMouseClick(event);
     }
 
+    /** 地图 Screen 完全渲染完之后再画菜单，保证在 Create 叠加层之上。 */
+    @SubscribeEvent
+    public static void onScreenRenderPost(ScreenEvent.Render.Post event) {
+        if (!MapScreens.isAnyMap(event.getScreen())) {
+            return;
+        }
+        DispatchOverlay.renderScreenLayer(event.getGuiGraphics());
+    }
+
     /** 菜单/选站模式下按 Esc 关闭，不关地图。 */
     @SubscribeEvent
     public static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {

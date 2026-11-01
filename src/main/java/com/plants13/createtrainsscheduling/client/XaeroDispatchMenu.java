@@ -183,6 +183,10 @@ public final class XaeroDispatchMenu {
         if (state == State.CLOSED) {
             return;
         }
+        // 进路规划时由 DispatchOverlay 画底部确认面板，这里不画菜单
+        if (state == State.ROUTE_PICK) {
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         Window window = mc.getWindow();
         double mouseX = mc.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth();
