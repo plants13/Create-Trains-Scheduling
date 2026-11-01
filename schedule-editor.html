@@ -632,6 +632,54 @@ function renderCrnSection(entry, data) {
   return box;
 }
 
+function renderTrainSeparationSection(data) {
+  const box = condBox ? condBox() : document.createElement('div');
+  box.className = 'col';
+  const title = document.createElement('div');
+  title.className = 'row';
+  const label = document.createElement('span');
+  label.className = 'muted small';
+  label.textContent = t('crn.sep.section');
+  title.appendChild(label);
+  box.appendChild(title);
+
+  if (!data || data.t !== 'compound' || !data.v.Ticks) {
+    const hint = document.createElement('div');
+    hint.className = 'muted small';
+    hint.textContent = t('crn.sep.legacy');
+    box.appendChild(hint);
+    return box;
+  }
+
+  const filterOptions = [
+    [0, t('crn.sep.filter.any')], [1, t('crn.sep.filter.same_line')],
+    [2, t('crn.sep.filter.same_category')], [3, t('crn.sep.filter.same_name')]
+  ];
+  condSelect(box, t('crn.sep.filter'), filterOptions, condInt(data, 'TrainFilter', 0), (v) => {
+    putByte(data, 'TrainFilter', v);
+    renderAll();
+  });
+
+  condSelect(box, t('crn.sep.timeSource'), [[0, t('crn.sep.real')], [1, t('crn.sep.game')]],
+    condInt(data, 'TimeSource', 0), (v) => { putByte(data, 'TimeSource', v); renderAll(); });
+
+  condInput(box, t('crn.sep.ticks'), condInt(data, 'Ticks', 100), (v) => {
+    const n = Number(v);
+    putInt(data, 'Ticks', Number.isNaN(n) ? 0 : n);
+    renderAll();
+  });
+
+  const stationInput = document.createElement('input');
+  stationInput.type = 'text';
+  stationInput.setAttribute('list', 'stationList');
+  stationInput.style.flex = '1';
+  stationInput.value = condStr(data, 'StationFilter', '');
+  stationInput.onchange = () => { putStr(data, 'StationFilter', stationInput.value); renderAll(); };
+  condRow(box, t('crn.sep.station'), stationInput);
+
+  return box;
+}
+
 // ---------------------------------------------------------------------------
 // friendly condition editors
 // ---------------------------------------------------------------------------
@@ -1140,10 +1188,11 @@ function renderEntry(entry, index) {
   }));
   card.appendChild(condTitle);
 
-  if (!entry.v.Conditions || entry.v.Conditions.t !== 'list') entry.v.Conditions = N.list([]);
-  entry.v.Conditions.v.forEach((column, colIndex) => {
-    card.appendChild(renderConditionColumn(entry, column, index, colIndex));
-  });
+  if (entry.v.Conditions && entry.v.Conditions.t === 'list') {
+    entry.v.Conditions.v.forEach((column, colIndex) => {
+      card.appendChild(renderConditionColumn(entry, column, index, colIndex));
+    });
+  }
   return card;
 }
 
