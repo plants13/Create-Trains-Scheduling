@@ -195,3 +195,21 @@ main                    # 1.21.1 NeoForge 0.0.3-alpha-*
 | CC:Tweaked | 1.20.1 版 registration 方式待查（旧 `IPeripheralProvider`） | `PeripheralCapability` | CC 桥需单独适配 |
 
 结论：**信号与调度运行时 API 基本同源，4 个 mixin 目标全部匹配**；主要工作量在构建体系、网络层、`RouteBuilder` 的数据结构差异。CRN 相关已从本分支移除。
+## 10. P1 状态：构建骨架已通（2026-11-01）
+
+分支 `1.20.1Forge-C0.5` 已换成 Forge 1.20.1 构建：
+
+- ForgeGradle `6.0.54` + Gradle 8.14.2 + Java 17 toolchain
+- 依赖：`net.minecraftforge:forge:1.20.1-47.4.6` + `fg.deobf("maven.modrinth:create:6R069CcK")`（Create 0.5.1.j）
+- 保留 Create 的 jar-in-jar（Flywheel 0.6.11-13 / Registrate），无需单独声明
+- `runServer` 启动通过：`Done (1.940s)!`，Create 0.5.1 与本 mod 同时加载
+- 关键坑：Create 0.5.1 发布 jar 带 **SRG refmap**，在官方映射 dev 运行时必须加：
+  ```groovy
+  property 'mixin.env.remapRefMap', 'true'
+  property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+  ```
+  否则 Create 自己的 mixin 会 `InvalidAccessorException` 崩溃
+- 骨架阶段已移除：`client/`、`network/`、`dispatch/`、`permissions/`、`schedule/`、`compat/`、mixin 配置（P2 起按 1.20.1 API 重写）
+- 产物：`create_trains_scheduling-0.0.4-alpha-1.20.1Forge-C5.jar`（8.4 KB，空壳）
+
+下一步（P2）：移植服务端核心 —— `SignalOverrideManager`、`DispatchService`、`RouteBuilder`（注意 Create 0.5 的 `Schedule`/`ScheduleEntry` 无参构造、`setData(CompoundTag)`、`Pair` 来自 `foundation.utility`）、权限 `SavedData`（2 参 Factory）、命令。

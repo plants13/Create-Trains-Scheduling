@@ -1,154 +1,109 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+    id 'eclipse'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.91'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0.50,6.1)'
 }
 
 version = mod_version
 group = mod_group_id
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-    // Create, Ponder and Flywheel development artifacts
-    maven { url = "https://maven.createmod.net" }
-    // Registrate
-    maven { url = "https://mvn.devos.one/snapshots" }
-    // DragonLib (CRN's hard dependency)
-    maven { url = "https://maven.mrjulsen.net" }
-    // Create Railways Navigator (hard dependency)
-    maven { url = "https://api.modrinth.com/maven" }
-    // DragonLib 的传递依赖：Architectury API / ForgeConfigAPIPort
-    maven { url = "https://maven.architectury.dev/" }
-    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
-    // JourneyMap API
-    maven { url = "https://maven.blamejared.com" }
-}
-
 base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-neoForge {
-    version = project.neo_version
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
 
     runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            // Create 0.5.1 release jar ships an SRG refmap; remap it for the official-mapped dev runtime
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
         client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
 
         server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
         }
 
         data {
-            data()
-            // 开发期自检：JSON <-> Schedule 往返 + 信号 mixin 注入点验证
-            jvmArguments.addAll '-Dcts.selftest=true', '-Dcts.verifyMixin=true'
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'),
+                    '--existing', file('src/main/resources/')
         }
     }
 }
 
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-}
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
+repositories {
+    mavenCentral()
+    mavenLocal()
+    // Create 0.5.1 (Modrinth maven)
+    maven { url = 'https://api.modrinth.com/maven' }
+    // Flywheel / Registrate (Create's dependencies)
+    maven { url = 'https://maven.tterrag.com' }
+    maven { url = 'https://maven.createmod.net' }
+    // Mixin
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public' }
 }
 
 dependencies {
-    // Create and its own dependencies (development artifacts)
-    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
-    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
-    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
-    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
-    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // Create Railways Navigator (hard dependency) + its DragonLib dependency
-    implementation("de.mrjulsen.mcdragonlib:dragonlib-neoforge:1.21.1-beta-3.0.28")
-    implementation("maven.modrinth:create-railways-navigator:rlsRwxq3")
-
-    // ComputerCraft / CC:Tweaked（运行时可选，不打包、不硬依赖）
-    compileOnly("maven.modrinth:cc-tweaked:1ewzHZYg")
-
-    // 客户端软集成：JourneyMap API（不打包、不硬依赖）
-    compileOnly("info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1")
-
-    // 注意：Xaero 集成不在编译期依赖 Xaero 的类（其 xaero.lib 是 jar-in-jar 嵌套 jar），
-    // 而是用 mixin 的字符串 targets + 访问器接口，见 mixin/xaero 与 client/XaeroOverlay。
+    // Create 0.5.1.j (hard dependency, provided at runtime by the server pack)
+    implementation fg.deobf("maven.modrinth:create:${create_modrinth_version}")
 }
 
-// Expand the version/mod properties in neoforge.mods.toml
-tasks.withType(ProcessResources).configureEach {
+// Expand mods.toml placeholders from gradle.properties
+tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
+            forge_version          : forge_version,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
             mod_authors            : mod_authors,
-            mod_description        : mod_description
+            mod_description        : mod_description,
+            create_version_range   : create_version_range,
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
+    filesMatching(['META-INF/mods.toml']) {
         expand replaceProperties
     }
 }
 
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            from components.java
-        }
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_authors,
+        ])
     }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/repo"
-        }
-    }
-}
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
+    finalizedBy 'reobfJar'
 }

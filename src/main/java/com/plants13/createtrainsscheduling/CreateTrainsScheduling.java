@@ -5,22 +5,18 @@ package com.plants13.createtrainsscheduling;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.plants13.createtrainsscheduling.schedule.ScheduleSelfTest;
-import com.simibubi.create.Create;
 
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
- * Main entry point of Create: Trains Scheduling.
+ * Main entry point of Create: Trains Scheduling (1.20.1 Forge / Create 0.5.1 port).
  *
- * <p>This mod builds on top of Create's train system. The hooks we will mostly work with are
- * {@link Create#RAILWAYS} (the global railway manager) and the schedule/station APIs under
- * {@code com.simibubi.create.content.trains}.
+ * <p>P1 skeleton: only config + startup logging. Dispatch features are ported in later phases
+ * (see docs/PORTING.md).
  */
 @Mod(CreateTrainsScheduling.MODID)
 public class CreateTrainsScheduling {
@@ -28,56 +24,16 @@ public class CreateTrainsScheduling {
 
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CreateTrainsScheduling(IEventBus modEventBus, ModContainer modContainer) {
-        modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::gatherData);
+    public CreateTrainsScheduling() {
+        var modBus = FMLJavaModLoadingContext.get()
+                .getModEventBus();
+        modBus.addListener(this::commonSetup);
 
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
-        // 软依赖：装了 CC:Tweaked 才加载桥接类（不打包、不硬依赖）
-        if (net.neoforged.fml.ModList.get()
-                .isLoaded("computercraft")) {
-            com.plants13.createtrainsscheduling.compat.cc.CcCompat.register(modEventBus);
-        }
-
-        runStartupSelfChecks();
-    }
-
-    /**
-     * 开发期自检钩子（通过 JVM 系统属性开启，正常游戏不会执行）：
-     *
-     * <ul>
-     *   <li>{@code -Dcts.selftest=true}：跑一次 JSON &lt;-&gt; Schedule 往返校验</li>
-     *   <li>{@code -Dcts.verifyMixin=true}：强制加载 Navigation 类，验证信号 mixin 注入点是否匹配</li>
-     * </ul>
-     */
-    private void runStartupSelfChecks() {
-        if (Boolean.getBoolean("cts.verifyMixin")) {
-            for (String className : new String[] {
-                    "com.simibubi.create.content.trains.entity.Train",
-                    "com.simibubi.create.content.trains.entity.Navigation",
-                    "com.simibubi.create.content.trains.signal.SignalBoundary",
-                    "com.simibubi.create.content.trains.signal.SignalEdgeGroup"}) {
-                try {
-                    Class<?> loaded = Class.forName(className);
-                    LOGGER.info("[CTS] forced load of {} succeeded (mixin pipeline ran)", loaded.getName());
-                } catch (Throwable t) {
-                    LOGGER.error("[CTS] forced load of {} failed", className, t);
-                }
-            }
-        }
-        if (Boolean.getBoolean("cts.selftest")) {
-            ScheduleSelfTest.run(null);
-        }
-    }
-
-    private void gatherData(final GatherDataEvent event) {
-        // 开发期自检：只在 runData 里执行，验证 JSON <-> Schedule 往返无损
-        event.getLookupProvider().thenAccept(ScheduleSelfTest::run);
+        ModLoadingContext.get()
+                .registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        LOGGER.info("{} loaded alongside Create {}", MODID, Create.ID);
-        LOGGER.info("Railway manager: {}", Create.RAILWAYS);
+        LOGGER.info("{} loaded (1.20.1 Forge, Create 0.5.1 line) - dispatch port skeleton", MODID);
     }
 }
