@@ -140,7 +140,7 @@ station.getVersion()
 
 - [`schedule-editor.html`](schedule-editor.html) —— 独立的单文件时刻表 JSON 浏览器编辑器（中英双语）；
   配合 `/cts getcrn`、`/cts getsch`、`/cts writesch` 使用。不访问服务器，不会执行任何粘贴内容。
-- [`COMPATIBILITY.md`](COMPATIBILITY.md) —— 客户端 × 服务端版本兼容性矩阵。
+- [`COMPATIBILITY_ZH.md`](COMPATIBILITY_ZH.md) —— 客户端 × 服务端版本兼容性矩阵。
 
 ## 术语说明
 
