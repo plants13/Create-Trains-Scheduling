@@ -10,6 +10,15 @@
 
 [English](README.md)
 
+## 快速开始
+
+1. 在**客户端与服务端**都安装本模组，以及 Create、Create Railways Navigator、DragonLib
+   （见[环境要求](#环境要求)）。
+2. 在客户端安装 Xaero 的世界地图**或** JourneyMap。
+3. 打开全屏地图，悬停列车（所有车厢会高亮），左键点击并选择**设置目的地…**。
+
+所有调度操作都由服务端校验并检查[权限](#权限)。
+
 ## 功能
 
 - **地图叠加层**（Xaero 的世界地图与 JourneyMap）—— 车站标记，以及按车厢高亮列车；
@@ -47,6 +56,9 @@
 | ComputerCraft / CC:Tweaked | 可选，启用 `cts_station` 外设 |
 | Java | 21 |
 
+版本混用（客户端与服务端模组版本不同）仅在 0.0.3 及以后受支持，且可能缺失功能 ——
+见 [COMPATIBILITY_ZH.md](COMPATIBILITY_ZH.md)。
+
 ## 安装
 
 **客户端**（地图 UI 需要）：Create、Create Railways Navigator、DragonLib、NeoForge、本模组，
@@ -54,6 +66,9 @@
 
 **服务端**：Create、Create Railways Navigator、DragonLib、NeoForge、本模组。
 地图模组属于客户端模组，服务端无需安装。
+
+两端应运行**同一版本**的本模组。命令与 ComputerCraft 桥接只需服务端安装；
+地图 UI 与剪贴板编辑器还需要客户端安装。
 
 ## 使用
 
@@ -86,6 +101,16 @@
 | `/cts writesch` | 从剪贴板读取时刻表 JSON 并写入手持物品（需要 `schedule` 权限） |
 | `/cts selftest` | 开发自检 |
 
+示例（列车名或 UUID，车站用逗号分隔）：
+
+```text
+/cts trains
+/cts route "东方快车" "中央,港口,机场"
+/cts override "东方快车"       # 仅下一个信号机
+/cts override "东方快车" 200   # 限时（200 tick = 10 秒）
+/cts perm grant Steve dispatch
+```
+
 ### 时刻表编辑器（剪贴板工作流）
 
 外部时刻表编辑器通过剪贴板工作，不新增物品或 GUI：
@@ -114,6 +139,16 @@
 - `schedule` —— 停用 / 恢复 / 清除时刻表
 
 旧的 `forceReleasePlayers` 配置项仍然等同于 `override`。
+
+### 配置
+
+公共配置文件为 `config/create_trains_scheduling-common.toml`：
+
+| 配置项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `debugLogging` | `false` | 输出更多时刻表处理相关的日志 |
+| `forceReleasePlayers` | `[]` | 允许强制放行红灯的玩家（名称或 UUID），无需 OP；OP 始终允许。也等同于 `override` 权限 |
+| `forceReleaseDurationTicks` | `1200` | 越红灯授权的默认时长（tick，20 tick = 1 秒）；可用 `/cts override <train> <ticks>` 单次覆盖 |
 
 ### ComputerCraft 桥接
 
@@ -168,6 +203,39 @@ jar 输出到 `build/libs/create_trains_scheduling-0.0.6-alpha-1.21.1Neo-C6.jar`
   而多站进路会拒绝下发，直到受影响的车站改名。
 - 通过不停车（途经点）需要 Steam 'n' Rails；没有它时中间站为正常停靠。
 - Alpha 软件：请备份存档。
+
+## 常见问题
+
+- **地图上没有调度菜单或车站标记** —— 请在客户端安装 Xaero 的世界地图或 JourneyMap，
+  并确认 Create 自带的列车地图叠加层已开启（本模组跟随 Create 的开关）。
+- **菜单能打开但操作被拒绝** —— 普通玩家默认没有权限；需要 OP 执行
+  `/cts perm grant <玩家> dispatch`（和/或 `override`、`schedule`）。
+- **`/cts getcrn`、`/cts getsch` 或 `/cts writesch` 没反应 / 提示缺少客户端通道** ——
+  客户端需要 0.0.6+ 并安装本模组；见 [COMPATIBILITY_ZH.md](COMPATIBILITY_ZH.md)。
+- **列车被送到错误车站 / 进路被拒绝** —— 同一轨道网络上的重名车站存在歧义；
+  请给其中一个车站改名，或使用多站进路。
+- **中间站会停车** —— 通过不停车需要 Steam 'n' Rails。
+
+## 致谢
+
+- [Create](https://github.com/Creators-of-Create/Create) —— 列车、时刻表与铁路系统
+- [Create Railways Navigator](https://github.com/MrJulsen/Create-Railways-Navigator) ——
+  线路/种类数据与交路信息（硬依赖）
+- [DragonLib](https://github.com/MrJulsen/DragonLib) —— CRN 的依赖
+- [Steam 'n' Rails](https://github.com/Layers-of-Railways/Railway) —— 通过不停车（途经点）
+- [Xaero 的世界地图](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map) 与
+  [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap) —— 地图集成
+- [CC:Tweaked](https://github.com/cc-tweaked/CC-Tweaked) —— ComputerCraft 桥接
+
+## 报告问题
+
+请提供：
+
+- 本模组版本，以及 Minecraft / NeoForge / Create / Create Railways Navigator 版本
+- 客户端与服务端的模组版本（如果不同）
+- 单人还是多人，以及安装的地图模组
+- 复现步骤与预期结果
+- `logs/latest.log` 以及 `crash-reports/` 中的崩溃报告
 
 ## 许可证
 
