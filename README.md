@@ -26,7 +26,7 @@ Current version: **0.0.4-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cre
   - **Resume schedule** — continues an interrupted schedule
 - **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
 - **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts perm`, `/cts selftest`
-- **ComputerCraft bridge** (optional) — a read-only `cts_station` peripheral on Create station blocks, exposing trains, schedules and CRN circuit data to Lua
+- **ComputerCraft bridge** (optional) — a read-only `cts_station` peripheral on Create station blocks, exposing dispatch state and CRN circuit data to Lua (station/schedule data comes from Create's own `Create_Station` peripheral)
 - **Languages** — English and 简体中文
 
 ## Requirements
@@ -93,23 +93,19 @@ The legacy `forceReleasePlayers` config entry still counts as `override`.
 ### ComputerCraft bridge
 
 With CC:Tweaked installed, every Create station block exposes a read-only peripheral of type
-`cts_station` (no new blocks or items — it is attached to Create's own station block entity):
+`cts_station` (no new blocks or items — it is attached to Create's own station block entity).
+
+This peripheral only adds **dispatch-specific state that Create does not expose**. Station names, train
+presence, schedules and the `train_imminent` / `train_arrival` / `train_departure` events are already
+provided by Create itself — use Create's `Create_Station` peripheral for those.
 
 ```lua
 local station = peripheral.find("cts_station")
-print(station.getStationName())
 
-for _, train in ipairs(station.getTrains()) do
-  print(train.name, train.line, train.terminus, train.category, train.hasSchedule)
-end
-
-station.getTrain("车名或UUID")       -- single train status (includes CRN line / terminus / category)
-station.getSchedule("车名或UUID")    -- schedule instructions in order
+station.getTrains()                 -- all tracked trains with dispatch state
+station.getTrain("车名或UUID")       -- single train: paused / completed / autoSchedule / overrides / speed
 station.getCircuit("车名或UUID")     -- CRN circuit: line / terminus / category
-station.getTrainsAtStation()         -- trains currently standing at this station
-
--- events
-local event, trainName, stationName = os.pullEvent("cts_train_arrival")
+station.getVersion()
 ```
 
 The peripheral is **read-only** on purpose: dispatching still goes through the map UI / commands with
