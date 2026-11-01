@@ -42,3 +42,7 @@ repo/
 ### Local developer notes (machine-specific, never committed) ###
 *.local.md
 
+
+# 本地交接文档，不公开
+HANDOFF.md
+HANDOFF.local.md
