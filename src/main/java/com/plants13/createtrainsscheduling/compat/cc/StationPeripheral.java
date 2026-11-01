@@ -13,8 +13,13 @@ import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
+import com.simibubi.create.content.trains.graph.EdgePointType;
+import com.simibubi.create.content.trains.graph.TrackGraph;
+import com.simibubi.create.content.trains.station.GlobalStation;
 import com.simibubi.create.content.trains.station.StationBlockEntity;
 
+import dan200.computercraft.api.lua.IArguments;
+import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
 
@@ -24,12 +29,17 @@ import dan200.computercraft.api.peripheral.IPeripheral;
  * <p>去重说明：车站名、停靠列车、时刻表、{@code train_arrival}/{@code train_departure} 事件
  * 已经由 Create 自带的 {@code Create_Station} 外设提供，本外设不再重复暴露。
  *
+ * <p>网络范围：默认情况下 {@code getTrains()} 只返回**本站所在轨道网络**上的列车，
+ * 避免邻近电脑读到其他线路的列车造成混淆；传 {@code true} 可读取全部网络
+ * （地图 mod 本来也会公开全服列车）。
+ *
  * <p>Lua 侧用法：
  * <pre>
  * local station = peripheral.find("cts_station")
- * station.getTrains()          -- 全服被跟踪列车 + 调度状态
- * station.getTrain("车名或UUID") -- 单列车调度状态（含越红灯授权）
- * station.getCircuit("车名或UUID") -- CRN 交路：线路 / 交路终点 / 种类
+ * station.getTrains()            -- 本站所在轨道网络上的列车 + 调度状态
+ * station.getTrains(true)        -- 全部轨道网络（调试用）
+ * station.getTrain("车名或UUID")  -- 单列车调度状态（含越红灯授权）
+ * station.getCircuit("车名或UUID")-- CRN 交路：线路 / 交路终点 / 种类
  * station.getVersion()
  * </pre>
  *
@@ -40,6 +50,9 @@ public final class StationPeripheral implements IPeripheral {
     private static final String TYPE = "cts_station";
 
     private final StationBlockEntity stationBlock;
+
+    private GlobalStation cachedStation;
+    private TrackGraph cachedGraph;
 
     public StationPeripheral(StationBlockEntity stationBlock) {
         this.stationBlock = stationBlock;
@@ -64,17 +77,27 @@ public final class StationPeripheral implements IPeripheral {
     // Lua 方法（仅调度专属数据，不与 Create_Station 重复）
     // ------------------------------------------------------------------
 
-    /** 服务器上所有被跟踪的列车，含调度状态。 */
+    /**
+     * 本站所在轨道网络上的列车，含调度状态。
+     *
+     * @param arguments 可选：第一个参数传 {@code true} 表示包含其他轨道网络的列车
+     */
     @LuaFunction(mainThread = true)
-    public final List<Object> getTrains() {
+    public final List<Object> getTrains(IArguments arguments) throws LuaException {
+        boolean includeOtherNetworks = arguments.optBoolean(0)
+                .orElse(false);
+        TrackGraph graph = includeOtherNetworks ? null : stationGraph();
         List<Object> result = new ArrayList<>();
         for (Train train : Create.RAILWAYS.trains.values()) {
+            if (graph != null && train.graph != graph) {
+                continue;
+            }
             result.add(trainInfo(train));
         }
         return result;
     }
 
-    /** 按车名或 UUID 查询单列车调度状态。 */
+    /** 按车名或 UUID 查询单列车调度状态（全服范围，按名字/UUID 精确匹配）。 */
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getTrain(String reference) {
         Train train = resolveTrain(reference);
@@ -107,6 +130,36 @@ public final class StationPeripheral implements IPeripheral {
     // ------------------------------------------------------------------
     // 数据工具
     // ------------------------------------------------------------------
+
+    private GlobalStation station() {
+        try {
+            return stationBlock.getStation();
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /** 本站所在的轨道网络；车站未成形时返回 null（此时 getTrains() 返回全部列车）。 */
+    private TrackGraph stationGraph() {
+        GlobalStation station = station();
+        if (station == null) {
+            cachedStation = null;
+            cachedGraph = null;
+            return null;
+        }
+        if (station != cachedStation || cachedGraph == null) {
+            cachedStation = station;
+            cachedGraph = null;
+            for (TrackGraph graph : Create.RAILWAYS.trackNetworks.values()) {
+                if (graph.getPoints(EdgePointType.STATION)
+                        .contains(station)) {
+                    cachedGraph = graph;
+                    break;
+                }
+            }
+        }
+        return cachedGraph;
+    }
 
     private static Train resolveTrain(String reference) {
         if (reference == null || reference.isBlank()) {

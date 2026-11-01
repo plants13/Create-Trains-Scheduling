@@ -102,7 +102,8 @@ provided by Create itself — use Create's `Create_Station` peripheral for those
 ```lua
 local station = peripheral.find("cts_station")
 
-station.getTrains()                 -- all tracked trains with dispatch state
+station.getTrains()                 -- trains on this station's track network (dispatch state)
+station.getTrains(true)             -- all track networks
 station.getTrain("车名或UUID")       -- single train: paused / completed / autoSchedule / overrides / speed
 station.getCircuit("车名或UUID")     -- CRN circuit: line / terminus / category
 station.getVersion()
