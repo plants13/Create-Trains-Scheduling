@@ -165,3 +165,33 @@ main                    # 1.21.1 NeoForge 0.0.3-alpha-*
 - [ ] ForgeGradle 6 + official mappings 下 Create mod 类方法名是否保持（预期保持）
 - [ ] Xaero 1.36 `GuiMap` 私有字段名
 - [ ] JourneyMap 5.9.18 v1 API 的全屏渲染事件名
+
+## 9. P0 核实结果：Create 0.5.1 真实 API（2026-11-01）
+
+用测试实例 `新岛铁道 v1.5.1` 的 `create-1.20.1-0.5.1.j.jar` 反编译核对：
+
+| API | Create 0.5.1 | Create 6.0.10 | 移植影响 |
+| --- | --- | --- | --- |
+| `Pair` 类型 | `com.simibubi.create.foundation.utility.Pair` | `net.createmod.catnip.data.Pair` | 改 import |
+| `ScheduleInstruction.write()` | 无参数 | 带 `HolderLookup.Provider` | `RouteBuilder` 改 |
+| `ScheduleInstruction.fromTag` | `fromTag(CompoundTag)` | `fromTag(registries, tag)` | `RouteBuilder` 改 |
+| `ScheduleDataEntry.setData` | `setData(CompoundTag)` | `setData(registries, tag)` | 改 |
+| `Schedule` 构造 | 只有 `Schedule()`，字段 `entries/cyclic/savedProgress` 公开 | `Schedule(entries, cyclic, progress)` | 手动填字段 |
+| `ScheduleEntry` 构造 | 只有 `ScheduleEntry()`，字段公开 | 全参构造 | 手动填字段 |
+| `Schedule.INSTRUCTION_TYPES` | `foundation.Pair` 列表 | `catnip.Pair` 列表 | waypoint 检测改 |
+| `Navigation.tick(Level)` | ✅ 同名同签名 | ✅ | mixin 不变 |
+| `Navigation.destination/distanceToDestination/waitingForSignal` | ✅ 存在 | ✅ | 不变 |
+| `SignalEdgeGroup.isOccupiedUnless(Train)` | ✅ | ✅ | mixin 不变 |
+| `SignalBoundary.isForcedRed(TrackNode)` | ✅ | ✅ | mixin 不变 |
+| `Train.frontSignalListener/backSignalListener` | ✅ | ✅ | mixin 不变 |
+| `Train` 字段/方法（id/graph/runtime/name/manualTick/carriages/speed、conductor、arriveAt） | ✅ | ✅ | 服务层基本可用 |
+| `ScheduleRuntime`（paused/completed/isAutoSchedule/currentEntry/getSchedule/setSchedule(Schedule,boolean)/discardSchedule） | ✅ | ✅ | 服务层基本可用 |
+| `StationBlockEntity.getStation()`、`GlobalStation.name/getPresentTrain/canApproachFrom` | ✅ | ✅ | 车站相关可用 |
+| 网络 | `SimpleChannel` + `IMessage` | payload registrar + `StreamCodec` | 网络层重写 |
+| `SavedData.Factory` | 2 参构造 | 3 参构造 | 权限持久化改 |
+| `ResourceLocation` | `new ResourceLocation(ns, path)` | `fromNamespaceAndPath` | 批量改 |
+| 时刻表物品 | 无数据组件，NBT `Schedule` | `AllDataComponents.TRAIN_SCHEDULE` | 编辑器功能后置 |
+| 映射/构建 | ForgeGradle 6 + SRG + mixin refmap | MDG + 官方名 | 构建体系重写 |
+| CC:Tweaked | 1.20.1 版 registration 方式待查（旧 `IPeripheralProvider`） | `PeripheralCapability` | CC 桥需单独适配 |
+
+结论：**信号与调度运行时 API 基本同源，4 个 mixin 目标全部匹配**；主要工作量在构建体系、网络层、`RouteBuilder` 的数据结构差异。CRN 相关已从本分支移除。
