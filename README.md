@@ -10,6 +10,16 @@ Current version: **0.0.6-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cre
 
 [简体中文](README_ZH.md)
 
+## Quick start
+
+1. Install this mod on **both** the client and the server, together with Create, Create Railways Navigator
+   and DragonLib (see [Requirements](#requirements)).
+2. On the client, install Xaero's World Map **or** JourneyMap.
+3. Open the fullscreen map, hover a train (all its carriages highlight), left-click it and choose
+   **Set destination…**.
+
+Every dispatch action is validated by the server and checked against [permissions](#permissions).
+
 ## Features
 
 - **Map overlay** (Xaero's World Map and JourneyMap) — station markers and per-carriage train highlight;
@@ -47,6 +57,9 @@ Current version: **0.0.6-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cre
 | ComputerCraft / CC:Tweaked | optional, enables the `cts_station` peripheral |
 | Java | 21 |
 
+Version mixing (different mod versions on client and server) is only supported from 0.0.3 onward and may
+lose features — see [COMPATIBILITY.md](COMPATIBILITY.md).
+
 ## Installation
 
 **Client** (needed for the map UI): Create, Create Railways Navigator, DragonLib, NeoForge, this mod,
@@ -54,6 +67,9 @@ and either Xaero's World Map or JourneyMap.
 
 **Server**: Create, Create Railways Navigator, DragonLib, NeoForge, and this mod.
 The map mods are client-side and do not need to be installed on the server.
+
+Both sides should run the **same** version of this mod. Commands and the ComputerCraft bridge only need
+the mod on the server; the map UI and the clipboard editor need it on the client as well.
 
 ## Usage
 
@@ -86,6 +102,16 @@ The map mods are client-side and do not need to be installed on the server.
 | `/cts writesch` | Read schedule JSON from the clipboard into the held schedule item (requires `schedule` permission) |
 | `/cts selftest` | Development self-test |
 
+Examples (train names or UUIDs, stations separated by commas):
+
+```text
+/cts trains
+/cts route "Orient Express" "Central,Harbour,Airport"
+/cts override "Orient Express"       # next signal only
+/cts override "Orient Express" 200   # timed (200 ticks = 10 seconds)
+/cts perm grant Steve dispatch
+```
+
 ### Schedule editor (clipboard workflow)
 
 The external schedule editor works through the clipboard, without any new items or GUIs:
@@ -116,6 +142,16 @@ the following per player (stored in the world save, survives restarts):
 - `schedule` — disable / resume / clear schedules
 
 The legacy `forceReleasePlayers` config entry still counts as `override`.
+
+### Configuration
+
+The common config file is `config/create_trains_scheduling-common.toml`:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `debugLogging` | `false` | Log extra information about train schedule handling |
+| `forceReleasePlayers` | `[]` | Players (name or UUID) allowed to force-release trains through red signals, even without OP. OPs always can. Also counts as the `override` permission |
+| `forceReleaseDurationTicks` | `1200` | Default duration of a red-signal override, in ticks (20 ticks = 1 second). Override per command with `/cts override <train> <ticks>` |
 
 ### ComputerCraft bridge
 
@@ -175,6 +211,39 @@ mixins apply.
   refuse to dispatch until the affected station is renamed.
 - Pass-through waypoints require Steam 'n' Rails; without it intermediate stations are normal stops.
 - Alpha software: back up your worlds.
+
+## Troubleshooting
+
+- **No dispatch menu or station markers on the map** — install Xaero's World Map or JourneyMap on the
+  client, and make sure Create's own train map overlay is enabled (this mod follows Create's toggle).
+- **Menu opens but actions are denied** — normal players have no permissions by default. An OP must run
+  `/cts perm grant <player> dispatch` (and/or `override`, `schedule`).
+- **`/cts getcrn`, `/cts getsch` or `/cts writesch` does nothing / reports a missing client channel** —
+  the client must run 0.0.6+ with this mod installed; see [COMPATIBILITY.md](COMPATIBILITY.md).
+- **A train goes to the wrong station / a route is refused** — stations with the same name on one track
+  network are ambiguous; rename one station or use multi-stop routes.
+- **Intermediate stations stop the train** — pass-through waypoints need Steam 'n' Rails.
+
+## Credits
+
+- [Create](https://github.com/Creators-of-Create/Create) — train, schedule and railway systems
+- [Create Railways Navigator](https://github.com/MrJulsen/Create-Railways-Navigator) — line/category data
+  and circuit information (hard dependency)
+- [DragonLib](https://github.com/MrJulsen/DragonLib) — CRN dependency
+- [Steam 'n' Rails](https://github.com/Layers-of-Railways/Railway) — pass-through waypoints
+- [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map) and
+  [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap) — map integration
+- [CC:Tweaked](https://github.com/cc-tweaked/CC-Tweaked) — ComputerCraft bridge
+
+## Reporting issues
+
+Please include:
+
+- this mod's version, plus the Minecraft / NeoForge / Create / Create Railways Navigator versions
+- client and server mod versions, if they differ
+- singleplayer or multiplayer, and which map mod is installed
+- steps to reproduce and the expected result
+- `logs/latest.log` and any crash report from `crash-reports/`
 
 ## License
 
