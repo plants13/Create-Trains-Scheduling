@@ -186,7 +186,8 @@ const I18N = {
     'v.string.section': '%s 含 § 格式化符',
     'v.string.control': '%s 含控制字符',
     'v.depth': '%s 嵌套过深',
-    'crn.section': 'CRN 交路区间（travel_section）',
+    'crn.section': 'CRN 交路区间（官方称“时刻表区段”，travel_section）',
+    'crn.sectionNote': 'CRN 官方中文称此概念为“时刻表区段”，英文本地化用词是 Section；官方指令名为“新建时刻表区段”。',
     'crn.category': '列车种类：',
     'crn.line': '列车线路：',
     'crn.usable': '区间可用',
@@ -343,7 +344,8 @@ const I18N = {
     'v.string.section': '%s contains the § formatting sign',
     'v.string.control': '%s contains control characters',
     'v.depth': '%s is nested too deeply',
-    'crn.section': 'CRN travel section (travel_section)',
+    'crn.section': 'CRN circuit section (CRN official: “New Schedule Section”, travel_section)',
+    'crn.sectionNote': 'CRN calls this concept a “Schedule Section”; the English term is Section, and the instruction is “New Schedule Section”.',
     'crn.category': 'Train category:',
     'crn.line': 'Train line:',
     'crn.usable': 'Section usable',
@@ -557,6 +559,11 @@ function renderCrnSection(entry, data) {
   label.textContent = t('crn.section');
   title.appendChild(label);
   box.appendChild(title);
+
+  const note = document.createElement('div');
+  note.className = 'muted small';
+  note.textContent = t('crn.sectionNote');
+  box.appendChild(note);
 
   const canFriendly = !!state.catalog && (catalogEntries('lines').length > 0 || catalogEntries('categories').length > 0);
   if (!canFriendly) {

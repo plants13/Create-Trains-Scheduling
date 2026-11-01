@@ -142,6 +142,16 @@ station.getVersion()
   配合 `/cts getcrn`、`/cts getsch`、`/cts writesch` 使用。不访问服务器，不会执行任何粘贴内容。
 - [`COMPATIBILITY.md`](COMPATIBILITY.md) —— 客户端 × 服务端版本兼容性矩阵。
 
+## 术语说明
+
+CRN 的 `createrailwaysnavigator:travel_section` 指令官方中文译名为**新建时刻表区段**，其英文为
+**New Schedule Section**；CRN 中对应的设置界面叫**区段设置**（**Section Settings**）。
+也就是说，**中文"区段"对应的英文本地化用词是 Section**。
+
+本项目内部把同一概念称为**交路**（英文代码中叫 circuit，例如 CC 外设的 `getCircuit` 方法、
+列车状态菜单里的"CRN 交路"字段）。两者指的是同一件事：本项目自己的文档使用"交路"，
+而从 CRN 本地化照搬的界面标签保留官方说法（"新建时刻表区段" / "New Schedule Section"）。
+
 ## 构建
 
 ```bash

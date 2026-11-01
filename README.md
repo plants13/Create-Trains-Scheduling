@@ -146,6 +146,17 @@ permission checks.
   no pasted content is executed.
 - [`COMPATIBILITY.md`](COMPATIBILITY.md) — client × server version compatibility matrix.
 
+## Terminology
+
+CRN's `createrailwaysnavigator:travel_section` instruction is officially localized as
+**New Schedule Section** (official Chinese: 新建时刻表区段), and CRN's settings screen for it is
+**Section Settings** (区段设置). The English word used by CRN for 区段 is **Section**.
+
+This project calls the same concept a **circuit** (交路) — see the `getCircuit` peripheral method and
+the "CRN circuit" field in the train status menu. Both names refer to the same thing: this project's own
+documentation uses "circuit", while UI labels taken from CRN keep CRN's official wording
+("New Schedule Section" / 新建时刻表区段).
+
 ## Building
 
 ```bash
