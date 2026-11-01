@@ -8,6 +8,8 @@ and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
 Current version: **0.0.6-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
 
+[简体中文](README_ZH.md)
+
 ## Features
 
 - **Map overlay** (Xaero's World Map and JourneyMap) — station markers and per-carriage train highlight;
@@ -24,6 +26,8 @@ Current version: **0.0.6-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Cre
   - **Disable schedule** — manually placed schedules are only *interrupted* (paused and kept);
     auto schedules created by this mod are cleared
   - **Resume schedule** — continues an interrupted schedule
+- **Schedule editor** — copy schedules and the editor catalog to/from the clipboard (`/cts getcrn`,
+  `/cts getsch`, `/cts writesch`) and edit them in a bundled single-file browser editor
 - **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
 - **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts perm`, `/cts selftest`
 - **ComputerCraft bridge** (optional) — a read-only `cts_station` peripheral on Create station blocks, exposing dispatch state and CRN circuit data to Lua (station/schedule data comes from Create's own `Create_Station` peripheral)
@@ -89,8 +93,12 @@ The external schedule editor works through the clipboard, without any new items 
 1. `/cts getcrn` — copies a JSON catalog of CRN lines / categories and all station names to the clipboard
    (use it as the dropdown data source in the HTML editor)
 2. `/cts getsch` — copies the held schedule item as JSON to the clipboard
-3. Edit the JSON (or use the single-file HTML editor) and put it back on the clipboard
+3. Edit the JSON with the bundled [`schedule-editor.html`](schedule-editor.html) (or by hand) and put it
+   back on the clipboard
 4. `/cts writesch` — reads the clipboard and writes it into the held schedule item
+
+Both the client and the server need version 0.0.6 or newer so the clipboard channel exists; mixing
+versions is covered in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 **Security:** clipboard content is treated purely as untrusted JSON data — it is never executed as a
 command. Before writing, the server enforces `schedule` permission, a per-player cooldown, a 15-second
