@@ -61,6 +61,12 @@ public final class DispatchCommands {
                         .executes(DispatchCommands::listTrains))
                 .then(Commands.literal("stations")
                         .executes(DispatchCommands::listStations))
+                .then(Commands.literal("getcrn")
+                        .executes(ScheduleEditorService::getCatalog))
+                .then(Commands.literal("getsch")
+                        .executes(ScheduleEditorService::getHeldSchedule))
+                .then(Commands.literal("writesch")
+                        .executes(ScheduleEditorService::requestWrite))
                 .then(Commands.literal("override")
                         .then(Commands.argument("train", StringArgumentType.string())
                                 // 默认：事件制（通过下一个信号后立即失效）

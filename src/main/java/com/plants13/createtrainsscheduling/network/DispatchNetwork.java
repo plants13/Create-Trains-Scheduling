@@ -8,6 +8,8 @@ import java.util.UUID;
 
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.client.CircuitInfoCache;
+import com.plants13.createtrainsscheduling.client.ClientScheduleEditorHandler;
+import com.plants13.createtrainsscheduling.client.ClientClipboard;
 import com.plants13.createtrainsscheduling.client.PermissionCache;
 import com.plants13.createtrainsscheduling.client.TrainStatusCache;
 import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
@@ -15,6 +17,7 @@ import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.plants13.createtrainsscheduling.permissions.ModPermission;
+import com.plants13.createtrainsscheduling.server.ScheduleEditorService;
 import com.plants13.createtrainsscheduling.permissions.PermissionManager;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
@@ -62,6 +65,12 @@ public final class DispatchNetwork {
                 DispatchNetwork::handleCircuitInfo);
         registrar.playToClient(PlayerPermissionsPayload.TYPE, PlayerPermissionsPayload.CODEC,
                 DispatchNetwork::handlePlayerPermissions);
+        registrar.playToClient(EditorJsonPayload.TYPE, EditorJsonPayload.CODEC,
+                DispatchNetwork::handleEditorJson);
+        registrar.playToClient(ClipboardRequestPayload.TYPE, ClipboardRequestPayload.CODEC,
+                DispatchNetwork::handleClipboardRequest);
+        registrar.playToServer(ClipboardContentPayload.TYPE, ClipboardContentPayload.CODEC,
+                DispatchNetwork::handleClipboardContent);
     }
 
     // ------------------------------------------------------------------
@@ -226,6 +235,23 @@ public final class DispatchNetwork {
 
     private static void handleCircuitInfo(CircuitInfoPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> CircuitInfoCache.accept(payload));
+    }
+
+    private static void handleEditorJson(EditorJsonPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> ClientScheduleEditorHandler.handleEditorJson(payload));
+    }
+
+    private static void handleClipboardRequest(ClipboardRequestPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> ClientScheduleEditorHandler.handleClipboardRequest(payload));
+    }
+
+    private static void handleClipboardContent(ClipboardContentPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = serverPlayer(context);
+            if (player != null) {
+                ScheduleEditorService.handleClipboardContent(player, payload.token(), payload.text());
+            }
+        });
     }
 
     /** 把玩家的权限同步给客户端（登录、授权/剥夺后调用）。 */

@@ -36,7 +36,8 @@ public final class ScheduleJson {
         return toJson(schedule, registries).toString();
     }
 
-    public static Schedule fromJson(JsonObject root, HolderLookup.Provider registries) {
+    /** 只解析出时刻表 NBT（不反序列化），便于先做安全校验。 */
+    public static CompoundTag readScheduleTag(JsonObject root) {
         if (root == null) {
             throw new IllegalArgumentException("schedule JSON is null");
         }
@@ -53,7 +54,11 @@ public final class ScheduleJson {
         if (!(tag instanceof CompoundTag compound)) {
             throw new IllegalArgumentException("'schedule' node is not a compound");
         }
-        return Schedule.fromTag(registries, compound);
+        return compound;
+    }
+
+    public static Schedule fromJson(JsonObject root, HolderLookup.Provider registries) {
+        return Schedule.fromTag(registries, readScheduleTag(root));
     }
 
     public static Schedule fromJsonString(String json, HolderLookup.Provider registries) {

@@ -77,7 +77,26 @@ The map mods are client-side and do not need to be installed on the server.
 | `/cts perm grant <player> <dispatch\|override\|schedule>` | OP only: grant a permission |
 | `/cts perm revoke <player> <permission>` | OP only: revoke a permission |
 | `/cts perm list [player]` | OP only: list granted permissions |
+| `/cts getcrn` | Copy the schedule-editor catalog (CRN lines / categories / stations) to the clipboard |
+| `/cts getsch` | Copy the held schedule item's JSON to the clipboard |
+| `/cts writesch` | Read schedule JSON from the clipboard into the held schedule item (requires `schedule` permission) |
 | `/cts selftest` | Development self-test |
+
+### Schedule editor (clipboard workflow)
+
+The external schedule editor works through the clipboard, without any new items or GUIs:
+
+1. `/cts getcrn` — copies a JSON catalog of CRN lines / categories and all station names to the clipboard
+   (use it as the dropdown data source in the HTML editor)
+2. `/cts getsch` — copies the held schedule item as JSON to the clipboard
+3. Edit the JSON (or use the single-file HTML editor) and put it back on the clipboard
+4. `/cts writesch` — reads the clipboard and writes it into the held schedule item
+
+**Security:** clipboard content is treated purely as untrusted JSON data — it is never executed as a
+command. Before writing, the server enforces `schedule` permission, a per-player cooldown, a 15-second
+token (so clipboard content can only be sent after an explicit `/cts writesch`), a 64 KB size limit,
+entry/condition count limits, NBT depth/size limits, registered instruction/condition ids only, and
+string sanitization (no `§` or control characters).
 
 ### Permissions
 

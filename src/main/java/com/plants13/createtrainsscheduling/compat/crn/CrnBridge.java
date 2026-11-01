@@ -2,10 +2,16 @@
 
 package com.plants13.createtrainsscheduling.compat.crn;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import de.mrjulsen.crn.api.core.RailwayBackendApi;
+import de.mrjulsen.crn.data.settings.GlobalSettings;
+import de.mrjulsen.crn.data.settings.TrainCategory;
+import de.mrjulsen.crn.data.settings.TrainLine;
 
 /**
  * CRN（Create Railways Navigator）集成入口。
@@ -32,6 +38,9 @@ public final class CrnBridge {
         }
     }
 
+    /** 编辑器目录用的命名条目（线路 / 种类）。 */
+    public record NamedEntry(String id, String name, int color) {}
+
     private CrnBridge() {}
 
     /** 铁路后端是否已就绪（只在服务器运行时为 true）。 */
@@ -45,8 +54,8 @@ public final class CrnBridge {
     }
 
     /** 已知车站名集合，后端未就绪返回空集合。 */
-    public static java.util.Set<String> knownStations() {
-        return isActive() ? RailwayBackendApi.getKnownStations() : java.util.Set.of();
+    public static Set<String> knownStations() {
+        return isActive() ? RailwayBackendApi.getKnownStations() : Set.of();
     }
 
     /**
@@ -69,6 +78,45 @@ public final class CrnBridge {
                         snapshot.category()
                                 .hasName() ? snapshot.category()
                                         .name() : ""));
+    }
+
+    /**
+     * 世界里配置的全部列车线路（编辑器目录用）。
+     *
+     * <p>CRN 没有在公开 API 暴露"全部线路"列表，这里读取它自己的全局设置（同一个数据源，
+     * 每条线路/种类的 id 与名字都是配置里的稳定值）；CRN 内部结构变动时安全降级为空列表。
+     */
+    public static List<NamedEntry> allLines() {
+        try {
+            List<TrainLine> lines = GlobalSettings.getInstance()
+                    .getAllTrainLines();
+            List<NamedEntry> result = new ArrayList<>(lines.size());
+            for (TrainLine line : lines) {
+                result.add(new NamedEntry(line.getId()
+                        .toString(), line.getLineName(), line.getColor()
+                                .getAsARGB()));
+            }
+            return result;
+        } catch (Throwable ignored) {
+            return List.of();
+        }
+    }
+
+    /** 世界里配置的全部列车种类（编辑器目录用）。 */
+    public static List<NamedEntry> allCategories() {
+        try {
+            List<TrainCategory> categories = GlobalSettings.getInstance()
+                    .getAllTrainCategories();
+            List<NamedEntry> result = new ArrayList<>(categories.size());
+            for (TrainCategory category : categories) {
+                result.add(new NamedEntry(category.getId()
+                        .toString(), category.getCategoryName(), category.getColor()
+                                .getAsARGB()));
+            }
+            return result;
+        } catch (Throwable ignored) {
+            return List.of();
+        }
     }
 
     public static String describe() {
