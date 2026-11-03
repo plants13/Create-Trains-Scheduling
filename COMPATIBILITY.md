@@ -22,19 +22,21 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P2 | 0.0.2 | Payload channels are **non-optional**; status payload uses the flags layout; permissions and manual-schedule interrupt added. |
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
+| P5 | 0.0.7 | Superset of P4: adds the optional GUI train-schedule action channel. |
 
 ## Matrix
 
-| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 |
-| --- | --- | --- | --- | --- |
-| **0.0.1** | ✅ | ❌ | ❌ | ❌ |
-| **0.0.2** | ❌ | ✅ | ⚠️ MS / CRN / QD / ED* | ⚠️ MS / CRN / ED* |
-| **0.0.3** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED |
-| **0.0.3a** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED |
-| **0.0.3b** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED |
-| **0.0.4** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED |
-| **0.0.5** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED |
-| **0.0.6** | ❌ | ⚠️ MS / CRN / ED (QD works) | ⚠️ ED | ✅ |
+| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 | 0.0.7 |
+| --- | --- | --- | --- | --- | --- |
+| **0.0.1** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **0.0.2** | ❌ | ✅ | ⚠️ MS / CRN / QD / ED* | ⚠️ MS / CRN / ED* | ⚠️ MS / CRN / ED / TSE* |
+| **0.0.3** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE |
+| **0.0.3a** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE |
+| **0.0.3b** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE |
+| **0.0.4** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE |
+| **0.0.5** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE |
+| **0.0.6** | ❌ | ⚠️ MS / CRN / ED (QD works) | ⚠️ ED | ✅ | ⚠️ TSE |
+| **0.0.7** | ❌ | ⚠️ MS / CRN / ED / TSE (QD works) | ⚠️ ED / TSE | ⚠️ TSE | ✅ |
 
 \* A 0.0.2 client does not have the UI for these features at all. The cell only says the server-side
 features are not reachable from this client, or that the client has no UI for them.
@@ -47,6 +49,7 @@ Feature codes:
 | CRN | CRN circuit info (line / terminus / category) in the train status panel | client ≥ 0.0.3 and server ≥ 0.0.3 |
 | QD | Quick destination (click a station while the train menu is open) | client ≥ 0.0.3b and server ≥ 0.0.2 |
 | ED | Schedule editor commands (`/cts getcrn`, `/cts getsch`, `/cts writesch`) + clipboard channels | client ≥ 0.0.6 and server ≥ 0.0.6 |
+| TSE | Train schedule export/import from the map dispatch menu (live schedule + run step) | client ≥ 0.0.7 and server ≥ 0.0.7 |
 | PERM | Per-feature permissions (`/cts perm`) | client ≥ 0.0.2 and server ≥ 0.0.2 |
 | INT | Manual schedule interrupt / resume | client ≥ 0.0.2 and server ≥ 0.0.2 |
 | CC | `cts_station` ComputerCraft peripheral | server ≥ 0.0.4 (not part of the login handshake) |
@@ -67,5 +70,6 @@ Feature codes:
 - If a mixed pair is unavoidable, upgrade the **server first**: 0.0.3+ servers accept older clients, and
   older servers accept newer clients (0.0.3+ era only).
 - Never mix 0.0.1 or 0.0.2 with a different protocol group.
-- `0.0.3a`, `0.0.3b`, `0.0.4` and `0.0.5` are wire-compatible with `0.0.3`; only client rendering
-  (0.0.3a/0.0.3b) or the server-side ComputerCraft bridge (0.0.4/0.0.5) changed.
+- `0.0.3a`, `0.0.3b`, `0.0.4`, `0.0.5`, `0.0.6` and `0.0.7` are wire-compatible with `0.0.3`; only client
+  rendering (0.0.3a/0.0.3b), the server-side ComputerCraft bridge (0.0.4/0.0.5), the clipboard editor
+  channels (0.0.6) or the GUI train-schedule channel (0.0.7) changed.
