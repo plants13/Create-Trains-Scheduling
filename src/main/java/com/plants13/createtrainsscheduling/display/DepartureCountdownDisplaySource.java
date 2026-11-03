@@ -38,6 +38,7 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
     private static final String KEY_DEPARTED_AT = "CtsDepartedAt";
     private static final int DEPARTURE_LINE_TICKS = 200; // 10 秒
     private static final String LINE = "━".repeat(3);
+    private static final long DISPLAY_LEAD_TICKS = 20;
 
     @Override
     public List<MutableComponent> provideText(DisplayLinkContext context, DisplayTargetStats stats) {
@@ -62,12 +63,22 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
 
         if (presentTrain != null) {
             config.putBoolean(KEY_PRESENT, true);
-            config.remove(KEY_DEPARTED_AT);
             DepartureCountdown.Result result = DepartureCountdown.compute(level, presentTrain);
             if (result == null || !result.exact()) {
+                config.remove(KEY_DEPARTED_AT);
                 return EMPTY;
             }
-            long seconds = Math.max(1, (result.ticks() + 19) / 20);
+            // 整体提前 1 秒：倒计时少读一秒，并在最后 1 秒直接切到绿色横线
+            long adjusted = result.ticks() - DISPLAY_LEAD_TICKS;
+            if (adjusted <= 0) {
+                if (!config.contains(KEY_DEPARTED_AT)) {
+                    config.putLong(KEY_DEPARTED_AT, now);
+                }
+                return List.of(Component.literal(LINE)
+                        .withStyle(ChatFormatting.GREEN));
+            }
+            config.remove(KEY_DEPARTED_AT);
+            long seconds = Math.max(1, (adjusted + 19) / 20);
             return List.of(Component.literal(Long.toString(seconds))
                     .withStyle(ChatFormatting.RED));
         }
@@ -75,7 +86,9 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
         // 列车刚离开站台：记录时间，并在 10 秒内显示绿色横线
         if (config.getBoolean(KEY_PRESENT)) {
             config.putBoolean(KEY_PRESENT, false);
-            config.putLong(KEY_DEPARTED_AT, now);
+            if (!config.contains(KEY_DEPARTED_AT)) {
+                config.putLong(KEY_DEPARTED_AT, now);
+            }
         }
         long departedAt = config.getLong(KEY_DEPARTED_AT);
         if (departedAt > 0 && now >= departedAt && now - departedAt <= DEPARTURE_LINE_TICKS) {
