@@ -36,6 +36,9 @@ Every dispatch action is validated by the server and checked against [permission
   - **Disable schedule** — manually placed schedules are only *interrupted* (paused and kept);
     auto schedules created by this mod are cleared
   - **Resume schedule** — continues an interrupted schedule
+- **Train schedule import/export (GUI)** — on the map dispatch menu, export a train's live schedule (with
+  runtime state) to the clipboard, or import one back and choose *import and continue* or *import and pause*;
+  replacing an existing schedule always asks for confirmation
 - **Schedule editor** — copy schedules and the editor catalog to/from the clipboard (`/cts getcrn`,
   `/cts getsch`, `/cts writesch`) and edit them in a bundled single-file browser editor
 - **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
@@ -125,6 +128,11 @@ The external schedule editor works through the clipboard, without any new items 
 
 Both the client and the server need version 0.0.6 or newer so the clipboard channel exists; mixing
 versions is covered in [COMPATIBILITY.md](COMPATIBILITY.md).
+
+The same JSON also works for **live trains**: the map dispatch menu has **Export schedule** and
+**Import schedule...** entries. Exports include the current run step (Progress); imports require the
+schedule permission and let you choose whether the train continues immediately or stays paused.
+Train imports replace the schedule only after a confirmation.
 
 **Security:** clipboard content is treated purely as untrusted JSON data — it is never executed as a
 command. Before writing, the server enforces `schedule` permission, a per-player cooldown, a 15-second

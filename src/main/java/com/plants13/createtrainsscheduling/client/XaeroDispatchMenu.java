@@ -10,6 +10,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.plants13.createtrainsscheduling.network.CircuitInfoPayload;
 import com.plants13.createtrainsscheduling.network.GrantOverridePayload;
 import com.plants13.createtrainsscheduling.network.SetScheduleEnabledPayload;
+import com.plants13.createtrainsscheduling.network.TrainScheduleActionPayload;
 import com.plants13.createtrainsscheduling.network.TrainStatusPayload;
 import com.plants13.createtrainsscheduling.permissions.ModPermission;
 import com.simibubi.create.CreateClient;
@@ -38,7 +39,8 @@ public final class XaeroDispatchMenu {
         CLOSED,
         OPEN,
         PICK_STATION,
-        ROUTE_PICK
+        ROUTE_PICK,
+        CONFIRM_IMPORT
     }
 
     private static final String PREFIX = "create_trains_scheduling.menu.";
@@ -56,6 +58,7 @@ public final class XaeroDispatchMenu {
     private static int panelWidth;
     private static int panelHeight;
     private static final List<Hit> HITS = new ArrayList<>();
+    private static final List<Hit> CONFIRM_HITS = new ArrayList<>();
     private static final List<PickedStation> ROUTE_PICKS = new ArrayList<>();
 
     /** 进路规划时已选的车站（按点击顺序）。 */
@@ -93,6 +96,9 @@ public final class XaeroDispatchMenu {
 
     /** 鼠标是否悬停在菜单面板上（用于区分"点菜单"和"点地图车站"）。 */
     public static boolean isOverMenu(double mouseX, double mouseY) {
+        if (state == State.CONFIRM_IMPORT) {
+            return true;
+        }
         if (state != State.OPEN) {
             return false;
         }
@@ -119,6 +125,7 @@ public final class XaeroDispatchMenu {
         trainId = null;
         showDetails = false;
         HITS.clear();
+        CONFIRM_HITS.clear();
         ROUTE_PICKS.clear();
     }
 
@@ -170,6 +177,10 @@ public final class XaeroDispatchMenu {
         if (button != 0) {
             return true;
         }
+        if (state == State.CONFIRM_IMPORT) {
+            handleConfirmClick(mouseX, mouseY);
+            return true;
+        }
         if (state == State.PICK_STATION) {
             return false; // 交给共享叠加层处理选站
         }
@@ -199,6 +210,10 @@ public final class XaeroDispatchMenu {
         }
         // 进路规划时由 DispatchOverlay 画底部确认面板，这里不画菜单
         if (state == State.ROUTE_PICK) {
+            return;
+        }
+        if (state == State.CONFIRM_IMPORT) {
+            renderConfirmImport(graphics);
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -328,6 +343,12 @@ public final class XaeroDispatchMenu {
                 }));
             }
         }
+        boolean canSchedule = PermissionCache.has(ModPermission.SCHEDULE);
+        items.add(new Item(Component.translatable(PREFIX + "export_schedule"), canSchedule, () -> {
+            sendScheduleAction(train.id, TrainScheduleActionPayload.ACTION_EXPORT);
+            close();
+        }));
+        items.add(new Item(Component.translatable(PREFIX + "import_schedule"), canSchedule, XaeroDispatchMenu::openConfirmImport));
         items.add(new Item(Component.translatable(PREFIX + "close"), true, XaeroDispatchMenu::close));
         return items;
     }
@@ -360,6 +381,88 @@ public final class XaeroDispatchMenu {
             HITS.add(new Hit(x + 1, itemY, width - 2, ITEM_HEIGHT, item.enabled(), item.action()));
             itemY += ITEM_HEIGHT;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // 时刻表导出/导入（GUI，无命令）
+    // ------------------------------------------------------------------
+
+    private static void openConfirmImport() {
+        state = State.CONFIRM_IMPORT;
+    }
+
+    private static void sendScheduleAction(UUID id, int action) {
+        if (ClientChannelCheck.canSendToServer(TrainScheduleActionPayload.TYPE)) {
+            PacketDistributor.sendToServer(new TrainScheduleActionPayload(id, action));
+        }
+    }
+
+    private static void renderConfirmImport(GuiGraphics graphics) {
+        Minecraft mc = Minecraft.getInstance();
+        Component title = Component.translatable(PREFIX + "confirm_import.title");
+        Component hint = Component.translatable(PREFIX + "confirm_import.hint");
+        List<Component> buttons = List.of(
+                Component.translatable(PREFIX + "confirm_import.run"),
+                Component.translatable(PREFIX + "confirm_import.pause"),
+                Component.translatable(PREFIX + "cancel"));
+        int width = Math.max(MIN_WIDTH, mc.font.width(title) + PADDING * 2);
+        for (Component button : buttons) {
+            width = Math.max(width, mc.font.width(button) + PADDING * 3);
+        }
+        for (Component line : List.of(hint)) {
+            width = Math.max(width, mc.font.width(line) + PADDING * 2);
+        }
+        int height = PADDING * 2 + (2 + buttons.size()) * ITEM_HEIGHT;
+        Window window = mc.getWindow();
+        int x = (int) Math.max(2, Math.min(anchorX, window.getGuiScaledWidth() - width - 2));
+        int y = (int) Math.max(2, Math.min(anchorY, window.getGuiScaledHeight() - height - 2));
+
+        graphics.fill(x, y, x + width, y + height, 0xE0101010);
+        graphics.fill(x, y, x + width, y + 1, 0xFF808080);
+        graphics.fill(x, y + height - 1, x + width, y + height, 0xFF808080);
+        graphics.fill(x, y, x + 1, y + height, 0xFF808080);
+        graphics.fill(x + width - 1, y, x + width, y + height, 0xFF808080);
+        graphics.drawString(mc.font, title, x + PADDING, y + PADDING, 0xFFFFD54F, true);
+        graphics.drawString(mc.font, hint, x + PADDING, y + PADDING + ITEM_HEIGHT, 0xFFB0B0B0, true);
+
+        CONFIRM_HITS.clear();
+        int itemY = y + PADDING + 2 * ITEM_HEIGHT;
+        int mouseX = (int) (mc.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth());
+        int mouseY = (int) (mc.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight());
+        for (int i = 0; i < buttons.size(); i++) {
+            int hitY = itemY + i * ITEM_HEIGHT;
+            boolean hovered = mouseX >= x + 1 && mouseX < x + width - 1
+                    && mouseY >= hitY && mouseY < hitY + ITEM_HEIGHT;
+            if (hovered) {
+                graphics.fill(x + 1, hitY, x + width - 1, hitY + ITEM_HEIGHT, 0x40FFFFFF);
+            }
+            int color = hovered ? 0xFFFFFFFF : 0xFFE0E0E0;
+            graphics.drawString(mc.font, buttons.get(i), x + PADDING, hitY + 3, color, true);
+            Runnable action = switch (i) {
+                case 0 -> () -> {
+                    sendScheduleAction(trainId, TrainScheduleActionPayload.ACTION_IMPORT_RUN);
+                    close();
+                };
+                case 1 -> () -> {
+                    sendScheduleAction(trainId, TrainScheduleActionPayload.ACTION_IMPORT_PAUSE);
+                    close();
+                };
+                default -> () -> state = State.OPEN;
+            };
+            CONFIRM_HITS.add(new Hit(x + 1, hitY, width - 2, ITEM_HEIGHT, true, action));
+        }
+    }
+
+    private static void handleConfirmClick(double mouseX, double mouseY) {
+        for (Hit hit : CONFIRM_HITS) {
+            if (mouseX >= hit.x() && mouseX < hit.x() + hit.w()
+                    && mouseY >= hit.y() && mouseY < hit.y() + hit.h()) {
+                hit.action()
+                        .run();
+                return;
+            }
+        }
+        state = State.OPEN;
     }
 
     private static Train currentTrain() {

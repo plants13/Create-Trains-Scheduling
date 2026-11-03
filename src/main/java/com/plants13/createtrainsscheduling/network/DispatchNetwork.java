@@ -18,6 +18,7 @@ import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.plants13.createtrainsscheduling.permissions.ModPermission;
 import com.plants13.createtrainsscheduling.server.ScheduleEditorService;
+import com.plants13.createtrainsscheduling.server.TrainScheduleService;
 import com.plants13.createtrainsscheduling.permissions.PermissionManager;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
@@ -57,6 +58,8 @@ public final class DispatchNetwork {
                 DispatchNetwork::handleGrantOverride);
         registrar.playToServer(SetScheduleEnabledPayload.TYPE, SetScheduleEnabledPayload.CODEC,
                 DispatchNetwork::handleSetScheduleEnabled);
+        registrar.playToServer(TrainScheduleActionPayload.TYPE, TrainScheduleActionPayload.CODEC,
+                DispatchNetwork::handleTrainScheduleAction);
         registrar.playToServer(RequestTrainStatusPayload.TYPE, RequestTrainStatusPayload.CODEC,
                 DispatchNetwork::handleRequestStatus);
         registrar.playToClient(TrainStatusPayload.TYPE, TrainStatusPayload.CODEC,
@@ -154,6 +157,15 @@ public final class DispatchNetwork {
         });
     }
 
+    private static void handleTrainScheduleAction(TrainScheduleActionPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = serverPlayer(context);
+            if (player != null) {
+                TrainScheduleService.handleAction(player, payload.trainId(), payload.action());
+            }
+        });
+    }
+
     private static void handleSetScheduleEnabled(SetScheduleEnabledPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = serverPlayer(context);
@@ -248,8 +260,15 @@ public final class DispatchNetwork {
     private static void handleClipboardContent(ClipboardContentPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = serverPlayer(context);
-            if (player != null) {
-                ScheduleEditorService.handleClipboardContent(player, payload.token(), payload.text());
+            if (player == null) {
+                return;
+            }
+            boolean consumed = ScheduleEditorService.handleClipboardContent(player, payload.token(), payload.text());
+            if (!consumed) {
+                consumed = TrainScheduleService.handleClipboardContent(player, payload.token(), payload.text());
+            }
+            if (!consumed) {
+                ScheduleEditorService.notifyTimeout(player);
             }
         });
     }

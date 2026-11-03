@@ -19,6 +19,7 @@ public record EditorJsonPayload(String kind, String json) implements CustomPacke
 
     public static final String KIND_CATALOG = "catalog";
     public static final String KIND_SCHEDULE = "schedule";
+    public static final String KIND_TRAIN_SCHEDULE = "train_schedule";
 
     public static final Type<EditorJsonPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(CreateTrainsScheduling.MODID, "editor_json"));

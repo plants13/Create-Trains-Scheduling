@@ -20,9 +20,14 @@ public final class ClientScheduleEditorHandler {
         ClientClipboard.copy(payload.json());
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null) {
-            Component message = EditorJsonPayload.KIND_CATALOG.equals(payload.kind())
-                    ? Component.translatable("create_trains_scheduling.command.getcrn.copied")
-                    : Component.translatable("create_trains_scheduling.command.getsch.copied");
+            Component message;
+            if (EditorJsonPayload.KIND_CATALOG.equals(payload.kind())) {
+                message = Component.translatable("create_trains_scheduling.command.getcrn.copied");
+            } else if (EditorJsonPayload.KIND_TRAIN_SCHEDULE.equals(payload.kind())) {
+                message = Component.translatable("create_trains_scheduling.train_schedule.exported");
+            } else {
+                message = Component.translatable("create_trains_scheduling.command.getsch.copied");
+            }
             minecraft.player.displayClientMessage(message, false);
         }
     }

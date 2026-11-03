@@ -139,32 +139,36 @@ public final class ScheduleEditorService {
     // 客户端回传剪贴板
     // ------------------------------------------------------------------
 
-    public static void handleClipboardContent(ServerPlayer player, UUID token, String text) {
+    public static void notifyTimeout(ServerPlayer player) {
+        fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
+    }
+
+    public static boolean handleClipboardContent(ServerPlayer player, UUID token, String text) {
         PendingWrite pending = PENDING.get(player.getUUID());
         if (pending == null || !pending.token()
                 .equals(token)) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
-            return;
+            return false;
         }
         PENDING.remove(player.getUUID());
         if (System.currentTimeMillis() > pending.expiresAt()) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
-            return;
+            return true;
         }
         if (!PermissionManager.has(player, ModPermission.SCHEDULE)) {
             fail(player, Component.translatable("create_trains_scheduling.network.no_permission",
                     ModPermission.SCHEDULE.id()));
-            return;
+            return true;
         }
         if (text == null || text.length() > ScheduleJsonValidator.MAX_JSON_CHARS) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.too_large",
                     ScheduleJsonValidator.MAX_JSON_CHARS));
-            return;
+            return true;
         }
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof ScheduleItem)) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.no_item"));
-            return;
+            return true;
         }
         try {
             JsonElement element = JsonParser.parseString(text);
@@ -194,6 +198,7 @@ public final class ScheduleEditorService {
                     .getString(), t.getMessage());
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.invalid_json"));
         }
+        return true;
     }
 
     private static void fail(ServerPlayer player, Component message) {

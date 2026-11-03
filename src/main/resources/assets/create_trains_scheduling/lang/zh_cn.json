@@ -17,8 +17,7 @@
   "create_trains_scheduling.command.route.no_conductor": "该列车无法自动运行（需要烈焰人燃烧室或坐垫上的非玩家生物）",
   "create_trains_scheduling.command.route.no_stations": "没有有效车站",
   "create_trains_scheduling.command.route.success": "已向列车 %s 下发一次性路线：%s",
-  "create_trains_scheduling.command.clear.success": "已清除列车 %s 的时刻表"
-,
+  "create_trains_scheduling.command.clear.success": "已清除列车 %s 的时刻表",
   "create_trains_scheduling.dispatch.no_conductor": "该列车无法自动运行（需要烈焰人燃烧室或坐垫上的非玩家生物）",
   "create_trains_scheduling.dispatch.no_graph": "该列车不在任何轨道网络上",
   "create_trains_scheduling.dispatch.destination.native": "正在设定目的地：%s（原生时刻表）",
@@ -26,8 +25,7 @@
   "create_trains_scheduling.dispatch.destination.unreachable": "找不到通往车站 %s 的路径",
   "create_trains_scheduling.dispatch.destination.start_failed": "无法启动前往 %s 的导航",
   "create_trains_scheduling.command.route.station_not_found": "找不到车站：%s",
-  "create_trains_scheduling.command.route.ambiguous": "车站名 '%s' 有歧义；请改名，或只作为单站目的地下发"
-,
+  "create_trains_scheduling.command.route.ambiguous": "车站名 '%s' 有歧义；请改名，或只作为单站目的地下发",
   "create_trains_scheduling.menu.set_destination": "设定目的地…",
   "create_trains_scheduling.menu.override_next_signal": "允许越过下一个红灯",
   "create_trains_scheduling.menu.details_show": "显示状态",
@@ -42,14 +40,12 @@
   "create_trains_scheduling.network.train_not_found": "找不到该列车（可能已被移除）",
   "create_trains_scheduling.network.station_not_found": "找不到该车站",
   "create_trains_scheduling.network.override.success": "已授权：列车可通过下一个红灯",
-  "create_trains_scheduling.network.clear.success": "已清除时刻表"
-,
+  "create_trains_scheduling.network.clear.success": "已清除时刻表",
   "create_trains_scheduling.menu.status.override": "越红灯授权：%s",
   "create_trains_scheduling.menu.status.unknown": "…",
   "create_trains_scheduling.menu.override.next_signal": "下一信号",
   "create_trains_scheduling.menu.override.timed": "剩余 %s 秒",
-  "create_trains_scheduling.menu.override.none": "无"
-,
+  "create_trains_scheduling.menu.override.none": "无",
   "create_trains_scheduling.dispatch.schedule.none": "该列车没有时刻表",
   "create_trains_scheduling.dispatch.schedule.resumed": "时刻表已恢复",
   "create_trains_scheduling.dispatch.schedule.disabled_auto": "时刻表已清除",
@@ -62,22 +58,17 @@
   "create_trains_scheduling.command.perm.granted": "已授予 %s 权限给 %s",
   "create_trains_scheduling.command.perm.revoked": "已剥夺 %s 的 %s 权限",
   "create_trains_scheduling.command.perm.list.one": "%s 的权限：%s",
-  "create_trains_scheduling.command.perm.list.header": "被显式授权的玩家（%s）："
-,
+  "create_trains_scheduling.command.perm.list.header": "被显式授权的玩家（%s）：",
   "create_trains_scheduling.menu.plan_route": "规划进路…",
   "create_trains_scheduling.dispatch.route.empty": "没有选择车站",
   "create_trains_scheduling.dispatch.route.ambiguous_station": "车站 '%s' 存在同名站；多站进路要求站名唯一",
-  "create_trains_scheduling.dispatch.route.dispatched": "进路已下发：%s"
-,
+  "create_trains_scheduling.dispatch.route.dispatched": "进路已下发：%s",
   "create_trains_scheduling.menu.route.hint": "左键添加车站 · 右键撤销 · Esc 取消",
   "create_trains_scheduling.menu.route.summary": "已选 %s 站：%s",
   "create_trains_scheduling.menu.route.confirm": "确认",
-  "create_trains_scheduling.menu.route.cancel": "取消"
-,
-  "create_trains_scheduling.dispatch.route.dispatched_waypoint": "进路已下发（途经 %s 站不停车）：%s"
-,
-  "create_trains_scheduling.menu.status.circuit": "交路：线路 %s · 终点 %s · 种类 %s"
-,
+  "create_trains_scheduling.menu.route.cancel": "取消",
+  "create_trains_scheduling.dispatch.route.dispatched_waypoint": "进路已下发（途经 %s 站不停车）：%s",
+  "create_trains_scheduling.menu.status.circuit": "交路：线路 %s · 终点 %s · 种类 %s",
   "create_trains_scheduling.schedule_editor.player_only": "该命令只能由玩家执行",
   "create_trains_scheduling.schedule_editor.client_missing": "客户端没有本 mod 的剪贴板通道；请在客户端安装本 mod",
   "create_trains_scheduling.command.getcrn.sent": "编辑器目录已发送到客户端",
@@ -107,5 +98,19 @@
   "create_trains_scheduling.schedule_editor.too_large": "时刻表数据过大",
   "create_trains_scheduling.schedule_editor.too_deep": "时刻表数据嵌套过深",
   "create_trains_scheduling.schedule_editor.string.too_long": "%s 处的字符串过长（最多 %s 字符）",
-  "create_trains_scheduling.schedule_editor.string.illegal": "%s 处的字符串包含非法字符"
+  "create_trains_scheduling.schedule_editor.string.illegal": "%s 处的字符串包含非法字符",
+  "create_trains_scheduling.menu.export_schedule": "导出时刻表",
+  "create_trains_scheduling.menu.import_schedule": "导入时刻表…",
+  "create_trains_scheduling.menu.confirm_import.title": "替换列车时刻表？",
+  "create_trains_scheduling.menu.confirm_import.hint": "当前时刻表将被覆盖。",
+  "create_trains_scheduling.menu.confirm_import.run": "导入并继续运行",
+  "create_trains_scheduling.menu.confirm_import.pause": "导入并暂停",
+  "create_trains_scheduling.menu.cancel": "取消",
+  "create_trains_scheduling.train_schedule.exported": "列车时刻表 JSON 已复制到剪贴板",
+  "create_trains_scheduling.train_schedule.no_train": "找不到该列车",
+  "create_trains_scheduling.train_schedule.none": "该列车没有时刻表",
+  "create_trains_scheduling.train_schedule.cooldown": "请稍后再编辑列车时刻表",
+  "create_trains_scheduling.train_schedule.unknown_action": "未知的时刻表操作",
+  "create_trains_scheduling.train_schedule.import_requested": "正在读取剪贴板，请稍候…",
+  "create_trains_scheduling.train_schedule.import_success": "列车时刻表已更新"
 }

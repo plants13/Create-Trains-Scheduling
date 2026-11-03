@@ -17,8 +17,7 @@
   "create_trains_scheduling.command.route.no_conductor": "This train cannot run automatically (it needs a lit blaze burner or a non-player mob on a conductor seat)",
   "create_trains_scheduling.command.route.no_stations": "No valid stations given",
   "create_trains_scheduling.command.route.success": "Dispatched a one-off route to train %s: %s",
-  "create_trains_scheduling.command.clear.success": "Cleared the schedule of train %s"
-,
+  "create_trains_scheduling.command.clear.success": "Cleared the schedule of train %s",
   "create_trains_scheduling.dispatch.no_conductor": "This train cannot run automatically (it needs a lit blaze burner or a non-player mob on a conductor seat)",
   "create_trains_scheduling.dispatch.no_graph": "This train is not on a track network",
   "create_trains_scheduling.dispatch.destination.native": "Setting destination: %s (native schedule)",
@@ -26,8 +25,7 @@
   "create_trains_scheduling.dispatch.destination.unreachable": "Cannot find a path to station %s",
   "create_trains_scheduling.dispatch.destination.start_failed": "Failed to start navigation to %s",
   "create_trains_scheduling.command.route.station_not_found": "Station not found: %s",
-  "create_trains_scheduling.command.route.ambiguous": "Station name '%s' is ambiguous; rename it or dispatch it as a single destination"
-,
+  "create_trains_scheduling.command.route.ambiguous": "Station name '%s' is ambiguous; rename it or dispatch it as a single destination",
   "create_trains_scheduling.menu.set_destination": "Set destination...",
   "create_trains_scheduling.menu.override_next_signal": "Allow passing next red signal",
   "create_trains_scheduling.menu.details_show": "Show status",
@@ -42,14 +40,12 @@
   "create_trains_scheduling.network.train_not_found": "Train not found (it may have been removed)",
   "create_trains_scheduling.network.station_not_found": "Station not found",
   "create_trains_scheduling.network.override.success": "Granted: the train may pass its next red signal",
-  "create_trains_scheduling.network.clear.success": "Schedule cleared"
-,
+  "create_trains_scheduling.network.clear.success": "Schedule cleared",
   "create_trains_scheduling.menu.status.override": "Red-signal override: %s",
   "create_trains_scheduling.menu.status.unknown": "...",
   "create_trains_scheduling.menu.override.next_signal": "next signal",
   "create_trains_scheduling.menu.override.timed": "%ss left",
-  "create_trains_scheduling.menu.override.none": "none"
-,
+  "create_trains_scheduling.menu.override.none": "none",
   "create_trains_scheduling.dispatch.schedule.none": "This train has no schedule",
   "create_trains_scheduling.dispatch.schedule.resumed": "Schedule resumed",
   "create_trains_scheduling.dispatch.schedule.disabled_auto": "Schedule cleared",
@@ -62,22 +58,17 @@
   "create_trains_scheduling.command.perm.granted": "Granted %s to %s",
   "create_trains_scheduling.command.perm.revoked": "Revoked %s from %s",
   "create_trains_scheduling.command.perm.list.one": "Permissions of %s: %s",
-  "create_trains_scheduling.command.perm.list.header": "Players with explicit permissions (%s):"
-,
+  "create_trains_scheduling.command.perm.list.header": "Players with explicit permissions (%s):",
   "create_trains_scheduling.menu.plan_route": "Plan route...",
   "create_trains_scheduling.dispatch.route.empty": "No stations selected",
   "create_trains_scheduling.dispatch.route.ambiguous_station": "Station '%s' has a duplicate name; multi-stop routes need unique station names",
-  "create_trains_scheduling.dispatch.route.dispatched": "Route dispatched: %s"
-,
+  "create_trains_scheduling.dispatch.route.dispatched": "Route dispatched: %s",
   "create_trains_scheduling.menu.route.hint": "Left-click: add station · Right-click: undo · Esc: cancel",
   "create_trains_scheduling.menu.route.summary": "Selected %s stations: %s",
   "create_trains_scheduling.menu.route.confirm": "Confirm",
-  "create_trains_scheduling.menu.route.cancel": "Cancel"
-,
-  "create_trains_scheduling.dispatch.route.dispatched_waypoint": "Route dispatched (passing %s intermediate stations without stopping): %s"
-,
-  "create_trains_scheduling.menu.status.circuit": "Circuit: line %s · to %s · type %s"
-,
+  "create_trains_scheduling.menu.route.cancel": "Cancel",
+  "create_trains_scheduling.dispatch.route.dispatched_waypoint": "Route dispatched (passing %s intermediate stations without stopping): %s",
+  "create_trains_scheduling.menu.status.circuit": "Circuit: line %s · to %s · type %s",
   "create_trains_scheduling.schedule_editor.player_only": "This command can only be used by a player",
   "create_trains_scheduling.schedule_editor.client_missing": "The client does not have this mod's clipboard channel; install the mod on the client",
   "create_trains_scheduling.command.getcrn.sent": "Editor catalog sent to the client",
@@ -107,5 +98,19 @@
   "create_trains_scheduling.schedule_editor.too_large": "Schedule data is too large",
   "create_trains_scheduling.schedule_editor.too_deep": "Schedule data is nested too deeply",
   "create_trains_scheduling.schedule_editor.string.too_long": "String at %s is too long (max %s)",
-  "create_trains_scheduling.schedule_editor.string.illegal": "String at %s contains illegal characters"
+  "create_trains_scheduling.schedule_editor.string.illegal": "String at %s contains illegal characters",
+  "create_trains_scheduling.menu.export_schedule": "Export schedule",
+  "create_trains_scheduling.menu.import_schedule": "Import schedule...",
+  "create_trains_scheduling.menu.confirm_import.title": "Replace train schedule?",
+  "create_trains_scheduling.menu.confirm_import.hint": "The current schedule will be overwritten.",
+  "create_trains_scheduling.menu.confirm_import.run": "Import and continue",
+  "create_trains_scheduling.menu.confirm_import.pause": "Import and pause",
+  "create_trains_scheduling.menu.cancel": "Cancel",
+  "create_trains_scheduling.train_schedule.exported": "Train schedule JSON copied to clipboard",
+  "create_trains_scheduling.train_schedule.no_train": "Train not found",
+  "create_trains_scheduling.train_schedule.none": "This train has no schedule",
+  "create_trains_scheduling.train_schedule.cooldown": "Please wait before editing the train schedule again",
+  "create_trains_scheduling.train_schedule.unknown_action": "Unknown schedule action",
+  "create_trains_scheduling.train_schedule.import_requested": "Reading clipboard, please wait...",
+  "create_trains_scheduling.train_schedule.import_success": "Train schedule updated"
 }

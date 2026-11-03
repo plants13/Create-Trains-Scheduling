@@ -126,6 +126,16 @@ const I18N = {
     'schedule.loaded': '时刻表已加载：%s 个条目',
     'visual.empty': '尚未加载时刻表。先 /cts getsch 复制，或点"新建空白时刻表"。',
     'cyclic.label': '循环时刻表（跑完从头开始）',
+    'progress.label': '运行步骤',
+    'progress.fromStart': '从头开始',
+    'progress.currentTag': '（当前步骤）',
+    'progress.entry': '第 %s 步',
+    'runtime.title': '列车运行状态',
+    'runtime.paused': '已暂停',
+    'runtime.running': '运行中',
+    'runtime.completed': '已完成',
+    'runtime.auto': '自动时刻表',
+    'runtime.manual': '手动时刻表',
     'btn.addEntry': '＋ 添加条目',
     'entry.title': '条目 #%s',
     'btn.up': '↑',
@@ -284,6 +294,16 @@ const I18N = {
     'schedule.loaded': 'Schedule loaded: %s entries',
     'visual.empty': 'No schedule loaded yet. Copy one with /cts getsch or click "New empty schedule".',
     'cyclic.label': 'Cyclic schedule (restart after the last entry)',
+    'progress.label': 'Start entry',
+    'progress.fromStart': 'From the start',
+    'progress.currentTag': '(current step)',
+    'progress.entry': 'Step %s',
+    'runtime.title': 'Train runtime',
+    'runtime.paused': 'paused',
+    'runtime.running': 'running',
+    'runtime.completed': 'completed',
+    'runtime.auto': 'auto schedule',
+    'runtime.manual': 'manual schedule',
     'btn.addEntry': '＋ Add entry',
     'entry.title': 'Entry #%s',
     'btn.up': '↑',
@@ -836,7 +856,7 @@ const FALLBACK_CONDITIONS = [
   'create:unloaded', 'create:powered'
 ];
 
-const state = { catalog: null, schedule: null };
+const state = { catalog: null, schedule: null, runtime: null };
 const $ = (id) => document.getElementById(id);
 
 function log(msg, cls) {
@@ -888,6 +908,7 @@ function makeEntry(instructionId) {
 }
 
 function newScheduleData() {
+  state.runtime = null;
   state.schedule = N.compound({
     Entries: N.list([makeEntry('create:destination')]),
     Cyclic: N.byte(1)
@@ -997,6 +1018,7 @@ function loadScheduleText(text) {
   catch (e) { log(t('log.jsonParseFail', 'Schedule', e.message), 'err'); return; }
   try { state.schedule = normalizeScheduleRoot(obj); }
   catch (e) { log(t('log.scheduleInvalid', e.message), 'err'); return; }
+  state.runtime = (obj && obj.runtime && typeof obj.runtime === 'object') ? obj.runtime : null;
   $('scheduleStatus').textContent = t('schedule.loaded', entriesList().length);
   log(t('log.scheduleLoaded'), 'ok');
   renderAll();
@@ -1078,6 +1100,61 @@ function makeButton(text, cls, onClick) {
 
 function renderAll() { renderVisual(); refreshRaw(); }
 
+function currentProgress() {
+  const entries = entriesList();
+  if (entries.length === 0) return 0;
+  const value = nodeValue(state.schedule.v.Progress, 0);
+  return Math.max(0, Math.min(Math.trunc(Number(value) || 0), entries.length - 1));
+}
+
+function entryLabel(entry) {
+  const instr = entry && entry.v ? entry.v.Instruction : null;
+  const id = instr && instr.v ? strValue(instr.v.Id) : '';
+  const data = instr && instr.v ? instr.v.Data : null;
+  const text = data && data.v ? strValue(data.v.Text) : '';
+  return instructionLabel(id) + (text ? ' · ' + text : '');
+}
+
+function clampProgress() {
+  if (!state.schedule) return;
+  const entries = entriesList();
+  if (entries.length === 0) {
+    delete state.schedule.v.Progress;
+    return;
+  }
+  const value = Math.trunc(Number(nodeValue(state.schedule.v.Progress, 0)) || 0);
+  if (value <= 0) {
+    delete state.schedule.v.Progress;
+    return;
+  }
+  const clamped = Math.min(value, entries.length - 1);
+  if (clamped <= 0) {
+    delete state.schedule.v.Progress;
+  } else {
+    state.schedule.v.Progress = { t: 'int', v: clamped };
+  }
+}
+
+function runtimeCurrentIndex() {
+  if (state.runtime && Number.isFinite(Number(state.runtime.currentEntry))) {
+    return Number(state.runtime.currentEntry);
+  }
+  return nodeValue(state.schedule.v.Progress, 0) > 0 ? currentProgress() : -1;
+}
+
+function renderRuntimeInfo(container) {
+  if (!state.runtime) return;
+  const info = document.createElement('div');
+  info.className = 'muted small';
+  const name = state.runtime.trainName || state.runtime.trainId || '?';
+  const paused = state.runtime.paused ? t('runtime.paused') : t('runtime.running');
+  const completed = state.runtime.completed ? ' · ' + t('runtime.completed') : '';
+  const mode = state.runtime.autoSchedule ? t('runtime.auto') : t('runtime.manual');
+  info.textContent = t('runtime.title') + ': ' + name + ' · ' + t('progress.entry', currentProgress() + 1)
+      + ' · ' + paused + completed + ' · ' + mode;
+  container.appendChild(info);
+}
+
 function renderVisual() {
   const pane = $('visualPane');
   pane.textContent = '';
@@ -1105,6 +1182,35 @@ function renderVisual() {
   }));
   pane.appendChild(cyclicRow);
 
+  clampProgress();
+  const progressRow = document.createElement('div');
+  progressRow.className = 'row';
+  const progressLabel = document.createElement('span');
+  progressLabel.className = 'muted small';
+  progressLabel.textContent = t('progress.label') + ':';
+  progressRow.appendChild(progressLabel);
+  const progressSel = document.createElement('select');
+  const startOpt = document.createElement('option');
+  startOpt.value = '-1';
+  startOpt.textContent = t('progress.fromStart');
+  progressSel.appendChild(startOpt);
+  entriesList().forEach((entry, index) => {
+    const opt = document.createElement('option');
+    opt.value = String(index);
+    opt.textContent = (index + 1) + '. ' + entryLabel(entry);
+    progressSel.appendChild(opt);
+  });
+  progressSel.value = String(nodeValue(state.schedule.v.Progress, 0) > 0 ? currentProgress() : -1);
+  progressSel.onchange = () => {
+    const value = Number(progressSel.value);
+    if (value <= 0) delete state.schedule.v.Progress;
+    else state.schedule.v.Progress = { t: 'int', v: value };
+    renderAll();
+  };
+  progressRow.appendChild(progressSel);
+  pane.appendChild(progressRow);
+  renderRuntimeInfo(pane);
+
   entriesList().forEach((entry, index) => pane.appendChild(renderEntry(entry, index)));
 }
 
@@ -1123,6 +1229,12 @@ function renderEntry(entry, index) {
   head.className = 'card-head';
   const title = document.createElement('h3');
   title.textContent = t('entry.title', index + 1);
+  if (index === runtimeCurrentIndex()) {
+    const tag = document.createElement('span');
+    tag.className = 'muted small';
+    tag.textContent = ' ' + t('progress.currentTag');
+    title.appendChild(tag);
+  }
   head.appendChild(title);
   head.appendChild(makeSelect(instructionOptions(strValue(instr.v.Id)), strValue(instr.v.Id), (value) => {
     instr.v.Id = N.string(value);
