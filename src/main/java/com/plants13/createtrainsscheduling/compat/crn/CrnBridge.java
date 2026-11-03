@@ -8,7 +8,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.simibubi.create.content.trains.entity.Train;
+import com.simibubi.create.content.trains.schedule.ScheduleEntry;
+import com.simibubi.create.content.trains.schedule.condition.ScheduleWaitCondition;
+
 import de.mrjulsen.crn.api.core.RailwayBackendApi;
+import de.mrjulsen.crn.block.blockentity.AdvancedDisplayBlockEntity;
+import de.mrjulsen.crn.data.schedule.condition.TrainSeparationCondition;
+import de.mrjulsen.crn.registry.ModDisplayTypes;
 import de.mrjulsen.crn.data.settings.GlobalSettings;
 import de.mrjulsen.crn.data.settings.TrainCategory;
 import de.mrjulsen.crn.data.settings.TrainLine;
@@ -116,6 +123,41 @@ public final class CrnBridge {
             return result;
         } catch (Throwable ignored) {
             return List.of();
+        }
+    }
+
+    /**
+     * 是否是 CRN 高级显示器且处于可显示静态文本的模式（simple_text / rich_text）。
+     *
+     * <p>CRN 的高级显示器对普通 DisplaySource 只接受这两种模式；平台板等模式会忽略文本。
+     */
+    public static boolean isAdvancedDisplayTextTarget(net.minecraft.world.level.block.entity.BlockEntity blockEntity) {
+        try {
+            if (!(blockEntity instanceof AdvancedDisplayBlockEntity display)) {
+                return false;
+            }
+            return ModDisplayTypes.SIMPLE_TEXT.equals(display.getDisplayType())
+                    || ModDisplayTypes.RICH_TEXT.equals(display.getDisplayType());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** 该等待条件是否为 CRN 的列车分离条件。 */
+    public static boolean isTrainSeparationCondition(ScheduleWaitCondition condition) {
+        return condition instanceof TrainSeparationCondition;
+    }
+
+    /**
+     * CRN 列车分离条件还剩多少 tick 才允许发车（0 表示不扣车）。
+     *
+     * <p>由 CRN 用服务端 gameTime 与发车记录直接计算，tick 级精度。
+     */
+    public static long trainSeparationHoldTicks(Train train, ScheduleEntry entry) {
+        try {
+            return TrainSeparationCondition.remainingHoldTicks(train, entry);
+        } catch (Throwable ignored) {
+            return 0L;
         }
     }
 

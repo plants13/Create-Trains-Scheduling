@@ -36,6 +36,9 @@ Every dispatch action is validated by the server and checked against [permission
   - **Disable schedule** — manually placed schedules are only *interrupted* (paused and kept);
     auto schedules created by this mod are cleared
   - **Resume schedule** — continues an interrupted schedule
+- **Departure countdown display source** — a display link source for station blocks: on a CRN Advanced Display
+  (simple/rich text mode) it shows red countdown digits while a train waits, then a green line for 10 seconds
+  after departure
 - **Train schedule import/export (GUI)** — on the map dispatch menu, export a train's live schedule (with
   runtime state) to the clipboard, or import one back and choose *import and continue* or *import and pause*;
   replacing an existing schedule always asks for confirmation

@@ -5,7 +5,11 @@ package com.plants13.createtrainsscheduling;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.plants13.createtrainsscheduling.display.DepartureCountdownDisplaySource;
 import com.plants13.createtrainsscheduling.schedule.ScheduleSelfTest;
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.api.behaviour.display.DisplaySource;
+import com.simibubi.create.api.registry.CreateRegistries;
 import com.simibubi.create.Create;
 
 import net.neoforged.bus.api.IEventBus;
@@ -14,6 +18,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * Main entry point of Create: Trains Scheduling.
@@ -28,7 +34,15 @@ public class CreateTrainsScheduling {
 
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    // 不能写成 static final：Mixin 插件可能在本模组构造前就加载这个类，
+    // 那时 Create 的 display_source 注册表还没初始化，DeferredHolder 会抛 "Not bootstrapped"。
+    public static DeferredRegister<DisplaySource> DISPLAY_SOURCES;
+    public static DeferredHolder<DisplaySource, DepartureCountdownDisplaySource> DEPARTURE_COUNTDOWN;
+
     public CreateTrainsScheduling(IEventBus modEventBus, ModContainer modContainer) {
+        DISPLAY_SOURCES = DeferredRegister.create(CreateRegistries.DISPLAY_SOURCE, MODID);
+        DEPARTURE_COUNTDOWN = DISPLAY_SOURCES.register("departure_countdown", DepartureCountdownDisplaySource::new);
+        DISPLAY_SOURCES.register(modEventBus);
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::gatherData);
 
@@ -78,6 +92,7 @@ public class CreateTrainsScheduling {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("{} loaded alongside Create {}", MODID, Create.ID);
+        DisplaySource.BY_BLOCK.add(AllBlocks.TRACK_STATION.get(), DEPARTURE_COUNTDOWN.get());
         LOGGER.info("Railway manager: {}", Create.RAILWAYS);
     }
 }
