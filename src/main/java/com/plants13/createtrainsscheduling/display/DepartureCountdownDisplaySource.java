@@ -67,7 +67,7 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
             if (result == null || !result.exact()) {
                 return EMPTY;
             }
-            long seconds = Math.max(0, (result.ticks() + 19) / 20);
+            long seconds = Math.max(1, (result.ticks() + 19) / 20);
             return List.of(Component.literal(Long.toString(seconds))
                     .withStyle(ChatFormatting.RED));
         }
