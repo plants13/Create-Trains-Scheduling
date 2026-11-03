@@ -37,7 +37,7 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
     private static final String KEY_PRESENT = "CtsTrainPresent";
     private static final String KEY_DEPARTED_AT = "CtsDepartedAt";
     private static final int DEPARTURE_LINE_TICKS = 200; // 10 秒
-    private static final String LINE = "━".repeat(16);
+    private static final String LINE = "━".repeat(3);
 
     @Override
     public List<MutableComponent> provideText(DisplayLinkContext context, DisplayTargetStats stats) {
