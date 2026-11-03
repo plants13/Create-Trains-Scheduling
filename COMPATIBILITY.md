@@ -12,6 +12,17 @@ and which features stop working?
 - ⚠️ join OK, but the listed features are unavailable in this pairing
 - ❌ cannot join (the connection is refused during the configuration/handshake phase)
 
+## Client mod requirement
+
+Create registers its built-in registries as **synced** registries. Starting with 0.0.8 this mod adds an
+entry to `create:display_source`, so a client **without** this mod cannot join a 0.0.8+ server (the
+registry sync fails with an "unknown key" error).
+
+| Server version | Client without this mod |
+| --- | --- |
+| 0.0.1 – 0.0.7 | can join; map UI, clipboard editor and display features are unavailable |
+| 0.0.8+ | cannot join; the client must install the matching mod version |
+
 ## Protocol groups
 
 Several releases share the same network protocol. They are grouped in the matrix below.
@@ -70,6 +81,8 @@ Feature codes:
 - Run the **same version on client and server**. Mixed pairs work from 0.0.3 onward but with feature gaps.
 - If a mixed pair is unavoidable, upgrade the **server first**: 0.0.3+ servers accept older clients, and
   older servers accept newer clients (0.0.3+ era only).
+- **From 0.0.8 onward the client must have the mod installed.** Server-only installs were possible up to
+  0.0.7; 0.0.8 adds a synced Create registry entry, so unmodded clients are rejected during registry sync.
 - Never mix 0.0.1 or 0.0.2 with a different protocol group.
 - `0.0.3a` through `0.0.8` are wire-compatible with `0.0.3`; only client rendering (0.0.3a/0.0.3b),
   the server-side ComputerCraft bridge (0.0.4/0.0.5), the clipboard editor channels (0.0.6), the GUI

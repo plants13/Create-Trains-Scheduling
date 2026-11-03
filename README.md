@@ -74,8 +74,7 @@ and either Xaero's World Map or JourneyMap.
 **Server**: Create, Create Railways Navigator, DragonLib, NeoForge, and this mod.
 The map mods are client-side and do not need to be installed on the server.
 
-Both sides should run the **same** version of this mod. Commands and the ComputerCraft bridge only need
-the mod on the server; the map UI and the clipboard editor need it on the client as well.
+Both sides should run the **same** version of this mod. **Since 0.0.8 the client must have the mod installed as well**: 0.0.8 registers an entry in one of Create's synced registries, so a client without the mod is rejected during registry sync. Up to 0.0.7 a server-only installation was enough for commands and the ComputerCraft bridge.
 
 ## Usage
 
