@@ -33,7 +33,7 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
 | P5 | 0.0.7 | Superset of P4: adds the optional GUI train-schedule action channel. |
-| P6 | 0.0.8, 0.0.8a | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. Older clients cannot join a P6 server; 0.0.8a is a bugfix for 0.0.8 with no wire or registry change. |
+| P6 | 0.0.8, 0.0.8a, 0.0.9 | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. Older clients cannot join a P6 server; 0.0.8a is a bugfix for 0.0.8; 0.0.9 only adds optional channels and keeps the same registry. |
 
 ## Matrix
 
@@ -53,6 +53,9 @@ Several releases share the same network protocol. They are grouped in the matrix
 \* A 0.0.2 client does not have the UI for these features at all. The cell only says the server-side
 features are not reachable from this client, or that the client has no UI for them.
 
+0.0.9 is join-compatible with 0.0.8/0.0.8a in both directions (same synced registry; only optional channels added).
+The separation queue needs a 0.0.9 server; the door radius setting needs 0.0.9 on both sides to configure.
+
 Feature codes:
 
 | Code | Feature | Requires |
@@ -63,6 +66,8 @@ Feature codes:
 | ED | Schedule editor commands (`/cts getcrn`, `/cts getsch`, `/cts writesch`) + clipboard channels | client ≥ 0.0.6 and server ≥ 0.0.6 |
 | TSE | Train schedule export/import from the map dispatch menu (live schedule + run step) | client ≥ 0.0.7 and server ≥ 0.0.7 |
 | DCD | Departure countdown display source on station blocks (CRN Advanced Display, simple/rich text) | client ≥ 0.0.8 and server ≥ 0.0.8 |
+| DQ | Separation departure queue (first-come-first-served) | server ≥ 0.0.9 (no client UI needed) |
+| DR | Station door radius setting | client ≥ 0.0.9 and server ≥ 0.0.9 for configuring; server ≥ 0.0.9 applies it |
 | PERM | Per-feature permissions (`/cts perm`) | client ≥ 0.0.2 and server ≥ 0.0.2 |
 | INT | Manual schedule interrupt / resume | client ≥ 0.0.2 and server ≥ 0.0.2 |
 | CC | `cts_station` ComputerCraft peripheral | server ≥ 0.0.4 (not part of the login handshake) |

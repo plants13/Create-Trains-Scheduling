@@ -6,7 +6,7 @@ A NeoForge 1.21.1 addon for [Create](https://github.com/Creators-of-Create/Creat
 dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map)
 and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
-Current version: **0.0.8a-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
+Current version: **0.0.9-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
 
 [简体中文](README_ZH.md)
 
@@ -44,6 +44,8 @@ Every dispatch action is validated by the server and checked against [permission
   replacing an existing schedule always asks for confirmation
 - **Schedule editor** — copy schedules and the editor catalog to/from the clipboard (`/cts getcrn`,
   `/cts getsch`, `/cts writesch`) and edit them in a bundled single-file browser editor
+- **Station door radius** — set a radius in the station GUI (0-256, 0 = unlimited); carriages farther than that from the station block keep their doors closed automatically (manual opening still works)
+- **Separation departure queue** — trains held by CRN train separation at same-named stations depart first-come-first-served at the configured interval
 - **Permission system** — normal players can't dispatch by default; OPs grant per-feature permissions
 - **Commands** — `/cts trains`, `/cts stations`, `/cts route`, `/cts override`, `/cts clear`, `/cts perm`, `/cts selftest`
 - **ComputerCraft bridge** (optional) — a read-only `cts_station` peripheral on Create station blocks, exposing dispatch state and CRN circuit data to Lua (station/schedule data comes from Create's own `Create_Station` peripheral)
@@ -208,7 +210,7 @@ documentation uses "circuit", while UI labels taken from CRN keep CRN's official
 ./gradlew build
 ```
 
-The jar is written to `build/libs/create_trains_scheduling-0.0.8a-alpha-1.21.1Neo-C6.jar`.
+The jar is written to `build/libs/create_trains_scheduling-0.0.9-alpha-1.21.1Neo-C6.jar`.
 
 Development self-checks (`./gradlew runData`) verify the JSON ↔ Schedule round-trip and that all
 mixins apply.

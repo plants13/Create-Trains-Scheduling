@@ -113,5 +113,6 @@
   "create_trains_scheduling.train_schedule.unknown_action": "Unknown schedule action",
   "create_trains_scheduling.train_schedule.import_requested": "Reading clipboard, please wait...",
   "create_trains_scheduling.train_schedule.import_success": "Train schedule updated",
-  "create_trains_scheduling.display_source.departure_countdown": "Departure Countdown"
+  "create_trains_scheduling.display_source.departure_countdown": "Departure Countdown",
+  "create_trains_scheduling.station.door_radius": "Door radius (0 = all)"
 }
