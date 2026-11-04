@@ -39,8 +39,8 @@ public abstract class StationScreenDoorRadiusMixin {
         int x = (screen.width - background.getWidth()) / 2;
         int y = (screen.height - background.getHeight()) / 2;
 
-        Label label = new Label(x + 101, y + 108, Component.empty()).withShadow();
-        ScrollInput input = new ScrollInput(x + 97, y + 102, 53, 16)
+        Label label = new Label(x + 39, y + 92, Component.empty()).withShadow();
+        ScrollInput input = new ScrollInput(x + 35, y + 86, 53, 16)
                 .withRange(0, StationDoorRadius.MAX + 1)
                 .titled(Component.translatable("create_trains_scheduling.station.door_radius"))
                 .format(value -> Component.literal(value == 0 ? "∞" : Integer.toString(value)))
