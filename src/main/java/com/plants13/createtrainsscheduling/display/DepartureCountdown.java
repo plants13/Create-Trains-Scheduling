@@ -75,6 +75,10 @@ public final class DepartureCountdown {
             }
             maxTicks = Math.max(maxTicks, remaining);
         }
+        // CRN 的列车分离是"到点才允许发车"的墙钟约束：条件组完成后 CRN 会取消 tickConditions，
+        // 此时 conditionProgress 已越过该组，必须单独把剩余 hold 计入，否则会误判为 0。
+        maxTicks = Math.max(maxTicks, CrnBridge.trainSeparationHoldTicks(train, entry));
+
         return exact ? new Result(maxTicks, true, "") : new Result(-1, false, blocker);
     }
 
