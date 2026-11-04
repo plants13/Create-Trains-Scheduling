@@ -107,7 +107,8 @@ public final class DepartureQueue {
 
         long lastDeparture = LAST_DEPARTURE.getOrDefault(key, 0L);
         long gap = Math.max(0, lastDeparture + interval - now);
-        return Math.max(original, gap + index * interval);
+        long base = Math.max(original, gap);
+        return base + (long) index * interval;
     }
 
     /** 清理已离开/暂停/完成/换站的列车；真正离开车站的队首会记录为一次发车。 */
