@@ -8,9 +8,14 @@
     "SignalEdgeGroupMixin",
     "SignalBoundaryMixin",
     "TrainSignalPassMixin",
-    "TrainSeparationQueueMixin"
+    "TrainSeparationQueueMixin",
+    "SlidingDoorRadiusMixin"
   ],
-  "client": [],
+  "client": [
+    "StationScreenDoorRadiusMixin",
+    "AbstractStationScreenAccessor",
+    "ScreenWidgetAccessor"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 0

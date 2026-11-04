@@ -113,5 +113,6 @@
   "create_trains_scheduling.train_schedule.unknown_action": "未知的时刻表操作",
   "create_trains_scheduling.train_schedule.import_requested": "正在读取剪贴板，请稍候…",
   "create_trains_scheduling.train_schedule.import_success": "列车时刻表已更新",
-  "create_trains_scheduling.display_source.departure_countdown": "发车倒计时"
+  "create_trains_scheduling.display_source.departure_countdown": "发车倒计时",
+  "create_trains_scheduling.station.door_radius": "开门半径（0 = 不限制）"
 }

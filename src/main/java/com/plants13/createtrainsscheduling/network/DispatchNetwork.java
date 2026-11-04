@@ -18,6 +18,8 @@ import com.plants13.createtrainsscheduling.dispatch.ForceReleasePermission;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
 import com.plants13.createtrainsscheduling.permissions.ModPermission;
 import com.plants13.createtrainsscheduling.server.ScheduleEditorService;
+import com.plants13.createtrainsscheduling.client.StationDoorRadiusClient;
+import com.plants13.createtrainsscheduling.server.StationDoorRadiusService;
 import com.plants13.createtrainsscheduling.server.TrainScheduleService;
 import com.plants13.createtrainsscheduling.permissions.PermissionManager;
 import com.simibubi.create.Create;
@@ -60,6 +62,12 @@ public final class DispatchNetwork {
                 DispatchNetwork::handleSetScheduleEnabled);
         registrar.playToServer(TrainScheduleActionPayload.TYPE, TrainScheduleActionPayload.CODEC,
                 DispatchNetwork::handleTrainScheduleAction);
+        registrar.playToServer(StationDoorRadiusQueryPayload.TYPE, StationDoorRadiusQueryPayload.CODEC,
+                DispatchNetwork::handleStationDoorRadiusQuery);
+        registrar.playToServer(StationDoorRadiusSetPayload.TYPE, StationDoorRadiusSetPayload.CODEC,
+                DispatchNetwork::handleStationDoorRadiusSet);
+        registrar.playToClient(StationDoorRadiusSyncPayload.TYPE, StationDoorRadiusSyncPayload.CODEC,
+                DispatchNetwork::handleStationDoorRadiusSync);
         registrar.playToServer(RequestTrainStatusPayload.TYPE, RequestTrainStatusPayload.CODEC,
                 DispatchNetwork::handleRequestStatus);
         registrar.playToClient(TrainStatusPayload.TYPE, TrainStatusPayload.CODEC,
@@ -155,6 +163,28 @@ public final class DispatchNetwork {
             SignalOverrideManager.grantNextSignal(train);
             reply(player, Component.translatable(PREFIX + "override.success"));
         });
+    }
+
+    private static void handleStationDoorRadiusQuery(StationDoorRadiusQueryPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = serverPlayer(context);
+            if (player != null) {
+                StationDoorRadiusService.handleQuery(player, payload.pos());
+            }
+        });
+    }
+
+    private static void handleStationDoorRadiusSet(StationDoorRadiusSetPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = serverPlayer(context);
+            if (player != null) {
+                StationDoorRadiusService.handleSet(player, payload.pos(), payload.radius());
+            }
+        });
+    }
+
+    private static void handleStationDoorRadiusSync(StationDoorRadiusSyncPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> StationDoorRadiusClient.accept(payload.pos(), payload.radius()));
     }
 
     private static void handleTrainScheduleAction(TrainScheduleActionPayload payload, IPayloadContext context) {
