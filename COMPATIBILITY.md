@@ -33,7 +33,7 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P2 | 0.0.2 | Payload channels are **non-optional**; status payload uses the flags layout; permissions and manual-schedule interrupt added. |
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
-| P5 | 0.0.7, 0.0.8 | Superset of P4: adds the optional GUI train-schedule action channel. 0.0.8 adds a display-source registry entry only (no wire change). |
+| P5 | 0.0.7, 0.0.8, 0.0.8a | Superset of P4: adds the optional GUI train-schedule action channel. 0.0.8 adds a display-source registry entry only (no wire change); 0.0.8a is a bugfix for 0.0.8 with no wire change (behaves like 0.0.8 in the matrix). |
 
 ## Matrix
 
