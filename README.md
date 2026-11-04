@@ -63,8 +63,7 @@ Every dispatch action is validated by the server and checked against [permission
 | ComputerCraft / CC:Tweaked | optional, enables the `cts_station` peripheral |
 | Java | 21 |
 
-Version mixing (different mod versions on client and server) is only supported from 0.0.3 onward and may
-lose features — see [COMPATIBILITY.md](COMPATIBILITY.md).
+Version mixing (different mod versions on client and server) is only supported from 0.0.3 onward and may lose features — see [COMPATIBILITY.md](COMPATIBILITY.md). In particular, **0.0.8+ servers require 0.0.8+ clients**; older clients (even with the mod installed) cannot join because of registry sync.
 
 ## Installation
 
@@ -74,7 +73,7 @@ and either Xaero's World Map or JourneyMap.
 **Server**: Create, Create Railways Navigator, DragonLib, NeoForge, and this mod.
 The map mods are client-side and do not need to be installed on the server.
 
-Both sides should run the **same** version of this mod. **Since 0.0.8 the client must have the mod installed as well**: 0.0.8 registers an entry in one of Create's synced registries, so a client without the mod is rejected during registry sync. Up to 0.0.7 a server-only installation was enough for commands and the ComputerCraft bridge.
+Both sides should run the **same** version of this mod. **Since 0.0.8 the client must have the mod installed as well, and it must be version 0.0.8 or newer**: 0.0.8 registers an entry in one of Create's synced registries, so older clients (or clients without the mod) are rejected during registry sync. Up to 0.0.7 a server-only installation was enough for commands and the ComputerCraft bridge.
 
 ## Usage
 

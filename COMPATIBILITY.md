@@ -10,18 +10,17 @@ and which features stop working?
 - Columns: **server** version.
 - ✅ join OK, all features supported by both sides work
 - ⚠️ join OK, but the listed features are unavailable in this pairing
-- ❌ cannot join (the connection is refused during the configuration/handshake phase)
+- ❌ cannot join (the connection is refused during the configuration/handshake or registry sync phase)
 
 ## Client mod requirement
 
 Create registers its built-in registries as **synced** registries. Starting with 0.0.8 this mod adds an
-entry to `create:display_source`, so a client **without** this mod cannot join a 0.0.8+ server (the
-registry sync fails with an "unknown key" error).
+entry to `create:display_source`, so a 0.0.8+ server sends a registry entry that older clients do not know.
 
-| Server version | Client without this mod |
-| --- | --- |
-| 0.0.1 – 0.0.7 | can join; map UI, clipboard editor and display features are unavailable |
-| 0.0.8+ | cannot join; the client must install the matching mod version |
+| Server version | Client without this mod | Client with an older mod version |
+| --- | --- | --- |
+| 0.0.1 – 0.0.7 | can join; map UI, clipboard editor and display features are unavailable | see matrix below |
+| 0.0.8+ | cannot join (registry sync fails with an "unknown key" error) | cannot join either — the client must be 0.0.8 or newer |
 
 ## Protocol groups
 
@@ -33,22 +32,24 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P2 | 0.0.2 | Payload channels are **non-optional**; status payload uses the flags layout; permissions and manual-schedule interrupt added. |
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
-| P5 | 0.0.7, 0.0.8, 0.0.8a | Superset of P4: adds the optional GUI train-schedule action channel. 0.0.8 adds a display-source registry entry only (no wire change); 0.0.8a is a bugfix for 0.0.8 with no wire change (behaves like 0.0.8 in the matrix). |
+| P5 | 0.0.7 | Superset of P4: adds the optional GUI train-schedule action channel. |
+| P6 | 0.0.8, 0.0.8a | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. Older clients cannot join a P6 server; 0.0.8a is a bugfix for 0.0.8 with no wire or registry change. |
 
 ## Matrix
 
-| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 | 0.0.7 | 0.0.8 |
+| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 | 0.0.7 | 0.0.8 – 0.0.8a |
 | --- | --- | --- | --- | --- | --- | --- |
 | **0.0.1** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **0.0.2** | ❌ | ✅ | ⚠️ MS / CRN / QD / ED* | ⚠️ MS / CRN / ED* | ⚠️ MS / CRN / ED / TSE* | ⚠️ MS / CRN / ED / TSE / DCD* |
-| **0.0.3** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE | ⚠️ ED / TSE / DCD |
-| **0.0.3a** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE | ⚠️ ED / TSE / DCD |
-| **0.0.3b** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ⚠️ ED / TSE / DCD |
-| **0.0.4** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ⚠️ ED / TSE / DCD |
-| **0.0.5** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ⚠️ ED / TSE / DCD |
-| **0.0.6** | ❌ | ⚠️ MS / CRN / ED (QD works) | ⚠️ ED | ✅ | ⚠️ TSE | ⚠️ TSE / DCD |
-| **0.0.7** | ❌ | ⚠️ MS / CRN / ED / TSE (QD works) | ⚠️ ED / TSE | ⚠️ TSE | ✅ | ⚠️ DCD |
-| **0.0.8** | ❌ | ⚠️ MS / CRN / ED / TSE / DCD (QD works) | ⚠️ ED / TSE / DCD | ⚠️ TSE / DCD | ⚠️ DCD | ✅ |
+| **0.0.2** | ❌ | ✅ | ⚠️ MS / CRN / QD / ED* | ⚠️ MS / CRN / ED* | ⚠️ MS / CRN / ED / TSE* | ❌ |
+| **0.0.3** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE | ❌ |
+| **0.0.3a** | ❌ | ⚠️ MS / CRN | ✅ | ⚠️ ED | ⚠️ ED / TSE | ❌ |
+| **0.0.3b** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ❌ |
+| **0.0.4** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ❌ |
+| **0.0.5** | ❌ | ⚠️ MS / CRN (QD works) | ✅ | ⚠️ ED | ⚠️ ED / TSE | ❌ |
+| **0.0.6** | ❌ | ⚠️ MS / CRN / ED (QD works) | ⚠️ ED | ✅ | ⚠️ TSE | ❌ |
+| **0.0.7** | ❌ | ⚠️ MS / CRN / ED / TSE (QD works) | ⚠️ ED / TSE | ⚠️ TSE | ✅ | ❌ |
+| **0.0.8 – 0.0.8a** | ❌ | ⚠️ MS / CRN / ED / TSE / DCD (QD works) | ⚠️ ED / TSE / DCD | ⚠️ TSE / DCD | ⚠️ DCD | ✅ |
+
 \* A 0.0.2 client does not have the UI for these features at all. The cell only says the server-side
 features are not reachable from this client, or that the client has no UI for them.
 
@@ -71,19 +72,23 @@ Feature codes:
 - **0.0.1 ↔ anything newer**: 0.0.1 registers a non-optional `ClearSchedulePayload` channel that later
   versions no longer have, and its `TrainStatusPayload` layout differs. Both directions are refused.
 - **0.0.2 ↔ 0.0.1**: 0.0.2 registers non-optional channels that do not exist in 0.0.1 and vice versa.
-- **0.0.2 ↔ 0.0.3+**: both directions can join. The 0.0.2 payload set is a subset of the 0.0.3+ set,
+- **0.0.2 ↔ 0.0.3 – 0.0.7**: both directions can join. The 0.0.2 payload set is a subset of the later set,
   and from 0.0.3 onward every channel is optional, so extra channels on either side are negotiated away.
-- **0.0.3+ ↔ 0.0.3+**: all optional; missing channels are ignored. Only features that need a missing
-  channel are unavailable.
+- **0.0.8+ server ↔ any older client**: cannot join. The 0.0.8+ server syncs `create:display_source` with the
+  new `create_trains_scheduling:departure_countdown` entry, which older clients do not know; registry sync
+  fails.
+- **0.0.8+ client ↔ any older server**: can join. The server's registry simply lacks the newer entry, so the
+  client keeps it locally and everything else works (DCD unavailable).
 
 ## Recommendations
 
-- Run the **same version on client and server**. Mixed pairs work from 0.0.3 onward but with feature gaps.
-- If a mixed pair is unavoidable, upgrade the **server first**: 0.0.3+ servers accept older clients, and
-  older servers accept newer clients (0.0.3+ era only).
-- **From 0.0.8 onward the client must have the mod installed.** Server-only installs were possible up to
-  0.0.7; 0.0.8 adds a synced Create registry entry, so unmodded clients are rejected during registry sync.
+- Run the **same version on client and server**. Mixed pairs work up to 0.0.7 but with feature gaps, and
+  **0.0.8+ servers require 0.0.8+ clients**.
+- For servers on 0.0.7 or older, upgrading the server first is fine (older clients can still join).
+- For servers on 0.0.8 or newer, **upgrade the clients first** (or both sides together): a 0.0.8+ server
+  rejects any client older than 0.0.8, even if that client has the mod installed.
 - Never mix 0.0.1 or 0.0.2 with a different protocol group.
-- `0.0.3a` through `0.0.8` are wire-compatible with `0.0.3`; only client rendering (0.0.3a/0.0.3b),
-  the server-side ComputerCraft bridge (0.0.4/0.0.5), the clipboard editor channels (0.0.6), the GUI
-  train-schedule channel (0.0.7) or a display-source registry entry (0.0.8) changed.
+- `0.0.3a` through `0.0.7` are wire-compatible with `0.0.3`; only client rendering (0.0.3a/0.0.3b), the
+  server-side ComputerCraft bridge (0.0.4/0.0.5), the clipboard editor channels (0.0.6) or the GUI
+  train-schedule channel (0.0.7) changed. 0.0.8/0.0.8a keep the same wire protocol but add a synced registry
+  entry.
