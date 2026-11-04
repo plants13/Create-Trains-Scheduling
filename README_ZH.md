@@ -6,7 +6,7 @@
 并集成到 [Xaero 的世界地图](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map) 与
 [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap) 中。
 
-当前版本：**0.0.8a-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
+当前版本：**0.0.9-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
 
 [English](README.md)
 
@@ -40,6 +40,8 @@
   或导入回去；可选择*导入并继续运行*或*导入并暂停*，覆盖现有时刻表前必定二次确认
 - **时刻表编辑器** —— 通过剪贴板导入/导出时刻表与编辑器目录（`/cts getcrn`、
   `/cts getsch`、`/cts writesch`），并附带单文件浏览器编辑器
+- **车站开门半径** —— 在车站 GUI 中设置半径（0-256，0 = 不限制）；离车站方块超过半径的车厢门不再自动打开（手动开关门仍可用）
+- **分隔列车发车队列** —— 同名车站上被 CRN 分隔列车扣住的列车按先到先发顺序、以配置的间隔依次发车
 - **权限系统** —— 普通玩家默认无调度权限；OP 可按功能授予权限
 - **命令** —— `/cts trains`、`/cts stations`、`/cts route`、`/cts override`、`/cts clear`、`/cts perm`、`/cts selftest`
 - **ComputerCraft 桥接**（可选）—— 在 Create 车站方块上提供只读的 `cts_station` 外设，
@@ -199,7 +201,7 @@ CRN 的 `createrailwaysnavigator:travel_section` 指令官方中文译名为**�
 ./gradlew build
 ```
 
-jar 输出到 `build/libs/create_trains_scheduling-0.0.8a-alpha-1.21.1Neo-C6.jar`。
+jar 输出到 `build/libs/create_trains_scheduling-0.0.9-alpha-1.21.1Neo-C6.jar`。
 
 开发自检（`./gradlew runData`）会验证 JSON ↔ Schedule 往返以及所有 mixin 是否应用。
 
