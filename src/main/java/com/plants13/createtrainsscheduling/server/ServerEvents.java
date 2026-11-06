@@ -4,6 +4,7 @@ package com.plants13.createtrainsscheduling.server;
 
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
+import com.plants13.createtrainsscheduling.compat.crn.StationDepartureQueue;
 import com.plants13.createtrainsscheduling.compat.snr.SnrCompat;
 import com.plants13.createtrainsscheduling.dispatch.DirectDispatchTracker;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
@@ -48,6 +49,7 @@ public final class ServerEvents {
     public static void onServerStopped(ServerStoppedEvent event) {
         SignalOverrideManager.clearAll();
         SignalOverrideManager.TICKING.remove();
+        StationDepartureQueue.clear();
     }
 
     @SubscribeEvent

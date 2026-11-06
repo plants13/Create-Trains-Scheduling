@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.plants13.createtrainsscheduling.Config;
+import com.plants13.createtrainsscheduling.compat.crn.StationDepartureQueue;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.simibubi.create.content.trains.schedule.ScheduleEntry;
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
@@ -159,6 +160,8 @@ public abstract class ScheduleRuntimeSeparationMixin {
             how.append("+filter:").append(filter);
         }
 
+        StationDepartureQueue.onDeparted(runtime.train, cts$interval(entry));
+
         CreateTrainsScheduling.LOGGER.info(
                 "[CTS separation] entry complete train={} entry={} separation={} recorded={} via={}",
                 trainName,
@@ -168,6 +171,21 @@ public abstract class ScheduleRuntimeSeparationMixin {
                 how);
     }
 
+    @Unique
+    private static long cts$interval(ScheduleEntry entry) {
+        long interval = 0L;
+        if (entry.conditions != null) {
+            for (var group : entry.conditions) {
+                for (ScheduleWaitCondition wait : group) {
+                    if (wait instanceof TrainSeparationCondition separation) {
+                        interval = Math.max(interval,
+                                separation.getData().getInt(TrainSeparationCondition.NBT_TICKS));
+                    }
+                }
+            }
+        }
+        return interval;
+    }
     @Unique
     private static List<String> cts$effectiveFilters(ScheduleEntry entry) {
         TrainSeparationCondition condition = null;
