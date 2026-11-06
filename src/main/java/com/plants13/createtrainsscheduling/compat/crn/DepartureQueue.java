@@ -5,6 +5,7 @@ package com.plants13.createtrainsscheduling.compat.crn;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -37,8 +38,12 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
  */
 public final class DepartureQueue {
 
-    private static final Map<String, Deque<UUID>> QUEUES = new HashMap<>();
-    private static final Map<String, Long> LAST_DEPARTURE = new HashMap<>();
+    private static final int MAX_QUEUE_SIZE = 64;
+    private static final long MAX_INTERVAL_TICKS = 72000L;
+    private static final long MAX_HOLD_TICKS = 72000L;
+
+    private static final Map<String, Deque<UUID>> QUEUES = new ConcurrentHashMap<>();
+    private static final Map<String, Long> LAST_DEPARTURE = new ConcurrentHashMap<>();
 
     private DepartureQueue() {}
 
@@ -48,7 +53,7 @@ public final class DepartureQueue {
      * @param original CRN 原本计算的剩余 tick
      * @return 叠加队列后的剩余 tick
      */
-    public static long adjust(Train train, ScheduleEntry entry, long original) {
+    public static synchronized long adjust(Train train, ScheduleEntry entry, long original) {
         if (train == null || entry == null) {
             return original;
         }
@@ -82,6 +87,9 @@ public final class DepartureQueue {
         Deque<UUID> queue = QUEUES.computeIfAbsent(key, k -> new ArrayDeque<>());
         prune(key, queue, now);
 
+        if (queue.size() >= MAX_QUEUE_SIZE) {
+            return original;
+        }
         if (queue.stream()
                 .noneMatch(id -> id.equals(train.id))) {
             queue.addLast(train.id);
@@ -108,7 +116,7 @@ public final class DepartureQueue {
         long lastDeparture = LAST_DEPARTURE.getOrDefault(key, 0L);
         long gap = Math.max(0, lastDeparture + interval - now);
         long base = Math.max(original, gap);
-        return base + (long) index * interval;
+        return Math.min(MAX_HOLD_TICKS, base + (long) index * interval);
     }
 
     /** 清理已离开/暂停/完成/换站的列车；真正离开车站的队首会记录为一次发车。 */
@@ -191,9 +199,15 @@ public final class DepartureQueue {
                             : 20;
                     ticks = value * ticksPer;
                 }
-                max = Math.max(max, ticks);
+                max = Math.max(max, Math.min(ticks, MAX_INTERVAL_TICKS));
             }
         }
-        return max;
+        return Math.min(max, MAX_INTERVAL_TICKS);
+    }
+
+    /** Clear static queue state when the server stops. */
+    public static synchronized void clear() {
+        QUEUES.clear();
+        LAST_DEPARTURE.clear();
     }
 }

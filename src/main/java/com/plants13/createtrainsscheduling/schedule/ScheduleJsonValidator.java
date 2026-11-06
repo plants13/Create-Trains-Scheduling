@@ -28,7 +28,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class ScheduleJsonValidator {
 
-    public static final int MAX_JSON_CHARS = 64 * 1024;
+    public static final int MAX_JSON_CHARS = 32767; // ByteBufCodecs.STRING_UTF8 的实际上限
     public static final int MAX_ENTRIES = 64;
     public static final int MAX_CONDITION_COLUMNS = 8;
     public static final int MAX_CONDITIONS_PER_COLUMN = 16;

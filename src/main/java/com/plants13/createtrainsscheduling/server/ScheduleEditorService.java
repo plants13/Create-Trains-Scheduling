@@ -65,6 +65,11 @@ public final class ScheduleEditorService {
         }
         String json = ScheduleCatalog.build()
                 .toString();
+        if (json.length() > ScheduleJsonValidator.MAX_JSON_CHARS) {
+            source.sendFailure(Component.translatable("create_trains_scheduling.schedule_editor.json_too_large",
+                    ScheduleJsonValidator.MAX_JSON_CHARS));
+            return 0;
+        }
         PacketDistributor.sendToPlayer(player, new EditorJsonPayload(EditorJsonPayload.KIND_CATALOG, json));
         source.sendSuccess(() -> Component.translatable("create_trains_scheduling.command.getcrn.sent"), false);
         return 1;
@@ -92,8 +97,19 @@ public final class ScheduleEditorService {
             source.sendFailure(Component.translatable("create_trains_scheduling.schedule_editor.client_missing"));
             return 0;
         }
-        String json = ScheduleJson.toJsonString(schedule, player.getServer()
-                .registryAccess());
+        String json;
+        try {
+            json = ScheduleJson.toJsonString(schedule, player.getServer()
+                    .registryAccess());
+        } catch (Throwable t) {
+            source.sendFailure(Component.translatable("create_trains_scheduling.command.writesch.invalid_json"));
+            return 0;
+        }
+        if (json.length() > ScheduleJsonValidator.MAX_JSON_CHARS) {
+            source.sendFailure(Component.translatable("create_trains_scheduling.schedule_editor.json_too_large",
+                    ScheduleJsonValidator.MAX_JSON_CHARS));
+            return 0;
+        }
         PacketDistributor.sendToPlayer(player, new EditorJsonPayload(EditorJsonPayload.KIND_SCHEDULE, json));
         source.sendSuccess(() -> Component.translatable("create_trains_scheduling.command.getsch.sent"), false);
         return 1;

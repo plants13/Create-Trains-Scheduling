@@ -111,8 +111,17 @@ public final class TrainScheduleService {
         runtime.addProperty("state", train.runtime.state == null ? "PRE_TRANSIT" : train.runtime.state.name());
         root.add("runtime", runtime);
 
-        PacketDistributor.sendToPlayer(player,
-                new EditorJsonPayload(KIND_TRAIN_SCHEDULE, root.toString()));
+        try {
+            String json = root.toString();
+            if (json.length() > ScheduleJsonValidator.MAX_JSON_CHARS) {
+                fail(player, Component.translatable("create_trains_scheduling.schedule_editor.json_too_large",
+                        ScheduleJsonValidator.MAX_JSON_CHARS));
+                return;
+            }
+            PacketDistributor.sendToPlayer(player, new EditorJsonPayload(KIND_TRAIN_SCHEDULE, json));
+        } catch (Throwable t) {
+            fail(player, Component.translatable("create_trains_scheduling.command.writesch.invalid_json"));
+        }
     }
 
     private static void requestImport(ServerPlayer player, Train train, boolean pause) {

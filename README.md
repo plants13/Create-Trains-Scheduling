@@ -139,7 +139,7 @@ Train imports replace the schedule only after a confirmation.
 
 **Security:** clipboard content is treated purely as untrusted JSON data — it is never executed as a
 command. Before writing, the server enforces `schedule` permission, a per-player cooldown, a 15-second
-token (so clipboard content can only be sent after an explicit `/cts writesch`), a 64 KB size limit,
+token (so clipboard content can only be sent after an explicit `/cts writesch`), a 32,767 character JSON size limit (the payload limit),
 entry/condition count limits, NBT depth/size limits, registered instruction/condition ids only, and
 string sanitization (no `§` or control characters).
 

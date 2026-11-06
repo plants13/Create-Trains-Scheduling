@@ -117,5 +117,6 @@
   "create_trains_scheduling.station.door_radius": "Door radius (0 = all)",
   "create_trains_scheduling.network.route_too_many": "Too many stations in a route (max %s)",
   "create_trains_scheduling.command.route.too_many": "Too many stations in a route (max %s)",
-  "create_trains_scheduling.clipboard.warning": "Heads-up: the schedule import/export feature lets the server read or overwrite your clipboard when you import/export a schedule. Do not keep sensitive content on the clipboard. This warning is shown up to 3 times (disable it in config/create_trains_scheduling-client.toml)."
+  "create_trains_scheduling.clipboard.warning": "Heads-up: the schedule import/export feature lets the server read or overwrite your clipboard when you import/export a schedule. Do not keep sensitive content on the clipboard. This warning is shown up to 3 times (disable it in config/create_trains_scheduling-client.toml).",
+  "create_trains_scheduling.schedule_editor.json_too_large": "JSON is too large to send (max %s characters)"
 }
