@@ -33,7 +33,7 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
 | P5 | 0.0.7 | Superset of P4: adds the optional GUI train-schedule action channel. |
-| P6 | 0.0.8, 0.0.8a, 0.0.9, 0.0.9a | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. Older clients cannot join a P6 server; 0.0.8a/0.0.9a are bugfix releases with no wire or registry change. |
+| P6 | 0.0.8, 0.0.8a, 0.0.9, 0.0.9a, 0.0.9b | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. Older clients cannot join a P6 server; 0.0.8a/0.0.9a/0.0.9b are bugfix releases with no wire or registry change. |
 
 ## Matrix
 
