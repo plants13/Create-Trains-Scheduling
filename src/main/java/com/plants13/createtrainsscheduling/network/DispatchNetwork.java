@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.client.CircuitInfoCache;
 import com.plants13.createtrainsscheduling.client.ClientScheduleEditorHandler;
@@ -129,6 +130,12 @@ public final class DispatchNetwork {
                 reply(player, Component.translatable(PREFIX + "train_not_found"));
                 return;
             }
+            int maxRouteStations = Config.maxRouteStations();
+            if (payload.stationIds().size() > maxRouteStations) {
+                reply(player, Component.translatable(PREFIX + "route_too_many", maxRouteStations));
+                return;
+            }
+
             java.util.List<GlobalStation> stations = new java.util.ArrayList<>();
             for (java.util.UUID stationId : payload.stationIds()) {
                 GlobalStation station = findStation(train, stationId);

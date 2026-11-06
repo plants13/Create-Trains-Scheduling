@@ -95,7 +95,18 @@ public final class NbtJson {
         }
     }
 
+    private static final int MAX_DEPTH = 24;
+    private static final int MAX_KEY_LENGTH = 128;
+    private static final int MAX_ARRAY_LENGTH = 4096;
+
     public static Tag fromJson(JsonElement element) {
+        return fromJson(element, 0);
+    }
+
+    private static Tag fromJson(JsonElement element, int depth) {
+        if (depth > MAX_DEPTH) {
+            throw new IllegalArgumentException("NBT JSON nesting is too deep");
+        }
         if (element == null || !element.isJsonObject()) {
             throw new IllegalArgumentException("NBT node must be a JSON object");
         }
@@ -104,7 +115,8 @@ public final class NbtJson {
         JsonElement value = node.get("v");
         switch (type) {
             case "end":
-                return EndTag.INSTANCE;
+                // TAG_End 不能作为普通值/列表元素/复合键值进入 NBT，否则写盘时会截断/失步
+                throw new IllegalArgumentException("TAG_End is not allowed in schedule JSON");
             case "byte":
                 return ByteTag.valueOf(value.getAsByte());
             case "short":
@@ -121,6 +133,7 @@ public final class NbtJson {
                 return StringTag.valueOf(value.getAsString());
             case "byteArray": {
                 JsonArray arr = value.getAsJsonArray();
+                checkArraySize(arr);
                 byte[] bytes = new byte[arr.size()];
                 for (int i = 0; i < arr.size(); i++) {
                     bytes[i] = arr.get(i).getAsByte();
@@ -129,6 +142,7 @@ public final class NbtJson {
             }
             case "intArray": {
                 JsonArray arr = value.getAsJsonArray();
+                checkArraySize(arr);
                 int[] ints = new int[arr.size()];
                 for (int i = 0; i < arr.size(); i++) {
                     ints[i] = arr.get(i).getAsInt();
@@ -137,6 +151,7 @@ public final class NbtJson {
             }
             case "longArray": {
                 JsonArray arr = value.getAsJsonArray();
+                checkArraySize(arr);
                 long[] longs = new long[arr.size()];
                 for (int i = 0; i < arr.size(); i++) {
                     longs[i] = arr.get(i).getAsLong();
@@ -144,16 +159,40 @@ public final class NbtJson {
                 return new LongArrayTag(longs);
             }
             case "list": {
+                JsonArray arr = value.getAsJsonArray();
+                checkArraySize(arr);
                 ListTag list = new ListTag();
-                for (JsonElement child : value.getAsJsonArray()) {
-                    list.add(fromJson(child));
+                int elementType = -1;
+                for (JsonElement child : arr) {
+                    Tag childTag = fromJson(child, depth + 1);
+                    if (childTag.getId() == Tag.TAG_END) {
+                        throw new IllegalArgumentException("TAG_End is not allowed in NBT lists");
+                    }
+                    if (elementType == -1) {
+                        elementType = childTag.getId();
+                    } else if (elementType != childTag.getId()) {
+                        throw new IllegalArgumentException("NBT list elements must all have the same type");
+                    }
+                    list.add(childTag);
                 }
                 return list;
             }
             case "compound": {
+                JsonObject object = value.getAsJsonObject();
+                if (object.size() > MAX_ARRAY_LENGTH) {
+                    throw new IllegalArgumentException("NBT compound has too many keys");
+                }
                 CompoundTag compound = new CompoundTag();
-                for (var entry : value.getAsJsonObject().entrySet()) {
-                    compound.put(entry.getKey(), fromJson(entry.getValue()));
+                for (var entry : object.entrySet()) {
+                    String key = entry.getKey();
+                    if (key.isEmpty() || key.length() > MAX_KEY_LENGTH) {
+                        throw new IllegalArgumentException("NBT key is empty or too long");
+                    }
+                    Tag childTag = fromJson(entry.getValue(), depth + 1);
+                    if (childTag.getId() == Tag.TAG_END) {
+                        throw new IllegalArgumentException("TAG_End is not allowed in NBT compounds");
+                    }
+                    compound.put(key, childTag);
                 }
                 return compound;
             }
@@ -162,6 +201,11 @@ public final class NbtJson {
         }
     }
 
+    private static void checkArraySize(JsonArray arr) {
+        if (arr.size() > MAX_ARRAY_LENGTH) {
+            throw new IllegalArgumentException("NBT array/list is too large");
+        }
+    }
     private static JsonObject encode(String type, JsonElement value) {
         JsonObject node = new JsonObject();
         node.addProperty("t", type);

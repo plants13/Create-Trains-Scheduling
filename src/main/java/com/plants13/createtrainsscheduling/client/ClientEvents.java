@@ -7,6 +7,7 @@ import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.simibubi.create.compat.trainmap.TrainMapSyncClient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,6 +15,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import java.util.UUID;
 
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -101,6 +103,26 @@ public final class ClientEvents {
             }
         } else {
             statusRefreshTicks = 0;
+        }
+    }
+
+    /**
+     * M7 提示：服务端可通过本模组读取/覆盖剪贴板。前 3 次加入多人游戏时提示一次。
+     */
+    @SubscribeEvent
+    public static void onClientLogin(ClientPlayerNetworkEvent.LoggingIn event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.getSingleplayerServer() != null) {
+            return;
+        }
+        if (!ClientConfig.clipboardWarningEnabled() || ClientConfig.warningsShown() >= 3) {
+            return;
+        }
+        ClientConfig.markWarned();
+        if (event.getPlayer() != null) {
+            event.getPlayer()
+                    .displayClientMessage(
+                            Component.translatable("create_trains_scheduling.clipboard.warning"), false);
         }
     }
 }

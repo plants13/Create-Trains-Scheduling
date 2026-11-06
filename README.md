@@ -163,6 +163,10 @@ The common config file is `config/create_trains_scheduling-common.toml`:
 | `debugLogging` | `false` | Log extra information about train schedule handling |
 | `forceReleasePlayers` | `[]` | Players (name or UUID) allowed to force-release trains through red signals, even without OP. OPs always can. Also counts as the `override` permission |
 | `forceReleaseDurationTicks` | `1200` | Default duration of a red-signal override, in ticks (20 ticks = 1 second). Override per command with `/cts override <train> <ticks>` |
+| `maxRouteStations` | `64` | Maximum number of stations in a single route (command or map dispatch), 1–512 |
+
+The client config file `config/create_trains_scheduling-client.toml` has `clipboardAccessWarning` (default `true`):
+the first 3 multiplayer joins show a chat warning that the schedule editor lets the server read or overwrite the clipboard.
 
 ### ComputerCraft bridge
 

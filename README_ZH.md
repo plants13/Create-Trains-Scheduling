@@ -157,6 +157,10 @@
 | `debugLogging` | `false` | 输出更多时刻表处理相关的日志 |
 | `forceReleasePlayers` | `[]` | 允许强制放行红灯的玩家（名称或 UUID），无需 OP；OP 始终允许。也等同于 `override` 权限 |
 | `forceReleaseDurationTicks` | `1200` | 越红灯授权的默认时长（tick，20 tick = 1 秒）；可用 `/cts override <train> <ticks>` 单次覆盖 |
+| `maxRouteStations` | `64` | 单次进路的最大车站数（命令或地图调度），1–512 |
+
+客户端配置文件 `config/create_trains_scheduling-client.toml` 中有 `clipboardAccessWarning`（默认 `true`）：
+前 3 次加入多人游戏时会提示“时刻表编辑器允许服务器读取或覆盖剪贴板”。
 
 ### ComputerCraft 桥接
 

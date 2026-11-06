@@ -14,6 +14,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
 import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
@@ -172,6 +173,10 @@ public final class DispatchCommands {
             throw NO_CONDUCTOR.create();
         }
         List<String> stations = parseStations(StringArgumentType.getString(ctx, "stations"));
+        int maxRouteStations = Config.maxRouteStations();
+        if (stations.size() > maxRouteStations) {
+            throw new SimpleCommandExceptionType(Component.translatable(PREFIX + "route.too_many", maxRouteStations)).create();
+        }
         if (stations.isEmpty()) {
             throw NO_STATIONS.create();
         }

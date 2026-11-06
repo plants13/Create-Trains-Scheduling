@@ -47,6 +47,9 @@ public class CreateTrainsScheduling {
         modEventBus.addListener(this::gatherData);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            modContainer.registerConfig(ModConfig.Type.CLIENT, com.plants13.createtrainsscheduling.client.ClientConfig.SPEC);
+        }
 
         // 软依赖：装了 CC:Tweaked 才加载桥接类（不打包、不硬依赖）
         if (net.neoforged.fml.ModList.get()

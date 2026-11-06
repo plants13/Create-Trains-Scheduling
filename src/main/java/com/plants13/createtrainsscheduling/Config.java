@@ -34,7 +34,20 @@ public class Config {
             .comment("Default duration (ticks) of a red-signal override grant. Overridable per command: /cts override <train> <ticks>")
             .defineInRange("forceReleaseDurationTicks", 1200, 1, 72000);
 
+    public static final ModConfigSpec.IntValue MAX_ROUTE_STATIONS = BUILDER
+            .comment("Maximum number of stations in a single route (command or map dispatch)")
+            .defineInRange("maxRouteStations", 64, 1, 512);
+
     static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** 单次进路最大车站数，配置不可用时退回 64。 */
+    public static int maxRouteStations() {
+        try {
+            return MAX_ROUTE_STATIONS.get();
+        } catch (IllegalStateException ignored) {
+            return 64;
+        }
+    }
 
     /** 读取默认授权时长，配置不可用时退回 1200 ticks。 */
     public static int forceReleaseDurationTicks() {

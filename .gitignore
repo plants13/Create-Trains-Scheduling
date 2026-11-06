@@ -52,3 +52,6 @@ TODO.md
 
 # 本地工具脚本（不公开）
 tools/
+
+# 本地安全审查报告（不公开）
+docs/SECURITY_AUDIT.md

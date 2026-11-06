@@ -114,5 +114,8 @@
   "create_trains_scheduling.train_schedule.import_requested": "正在读取剪贴板，请稍候…",
   "create_trains_scheduling.train_schedule.import_success": "列车时刻表已更新",
   "create_trains_scheduling.display_source.departure_countdown": "发车倒计时",
-  "create_trains_scheduling.station.door_radius": "开门半径（0 = 不限制）"
+  "create_trains_scheduling.station.door_radius": "开门半径（0 = 不限制）",
+  "create_trains_scheduling.network.route_too_many": "进路车站过多（最多 %s 个）",
+  "create_trains_scheduling.command.route.too_many": "进路车站过多（最多 %s 个）",
+  "create_trains_scheduling.clipboard.warning": "提示：时刻表导入/导出功能允许服务器在导入/导出时读取或覆盖你的剪贴板。请勿在剪贴板中放置敏感内容。此提示最多显示 3 次（可在 config/create_trains_scheduling-client.toml 关闭）。"
 }
