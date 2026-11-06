@@ -5,6 +5,7 @@ package com.plants13.createtrainsscheduling.display;
 import java.util.List;
 
 import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
+import com.simibubi.create.Create;
 import com.simibubi.create.api.behaviour.display.DisplaySource;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.target.DisplayTargetStats;
@@ -59,7 +60,7 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
 
         CompoundTag config = context.sourceConfig();
         long now = level.getGameTime();
-        Train presentTrain = station.getPresentTrain();
+        Train presentTrain = findNextTrain(level, station);
 
         if (presentTrain != null) {
             config.putBoolean(KEY_PRESENT, true);
@@ -99,6 +100,30 @@ public final class DepartureCountdownDisplaySource extends DisplaySource {
         return EMPTY;
     }
 
+    /**
+     * 车站可能有多个列车等待；倒计时显示“下一辆要发车的车”，而不是 Create 的最近一列车。
+     */
+    private static Train findNextTrain(Level level, GlobalStation station) {
+        Train best = null;
+        long bestTicks = Long.MAX_VALUE;
+        for (Train candidate : Create.RAILWAYS.trains.values()) {
+            if (candidate == null || candidate.derailed || candidate.runtime == null) {
+                continue;
+            }
+            if (candidate.getCurrentStation() != station) {
+                continue;
+            }
+            DepartureCountdown.Result result = DepartureCountdown.compute(level, candidate);
+            if (result == null || !result.exact()) {
+                continue;
+            }
+            if (result.ticks() < bestTicks) {
+                bestTicks = result.ticks();
+                best = candidate;
+            }
+        }
+        return best != null ? best : station.getPresentTrain();
+    }
     /** 倒计时需要 1 秒刷新一次。 */
     @Override
     public int getPassiveRefreshTicks() {

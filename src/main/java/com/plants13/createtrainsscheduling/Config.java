@@ -40,6 +40,15 @@ public class Config {
 
     static final ModConfigSpec SPEC = BUILDER.build();
 
+    /** 调试日志开关，配置不可用时退回 false。 */
+    public static boolean debugLogging() {
+        try {
+            return DEBUG_LOGGING.get();
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
+    }
+
     /** 单次进路最大车站数，配置不可用时退回 64。 */
     public static int maxRouteStations() {
         try {

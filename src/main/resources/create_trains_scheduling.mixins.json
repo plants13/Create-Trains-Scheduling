@@ -8,7 +8,9 @@
     "SignalEdgeGroupMixin",
     "SignalBoundaryMixin",
     "TrainSignalPassMixin",
+    "ScheduleRuntimeSeparationMixin",
     "TrainSeparationQueueMixin",
+    "TrainSeparationHoldDebugMixin",
     "SlidingDoorRadiusMixin"
   ],
   "client": [
