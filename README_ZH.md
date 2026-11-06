@@ -6,7 +6,7 @@
 并集成到 [Xaero 的世界地图](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map) 与
 [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap) 中。
 
-当前版本：**0.0.9-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
+当前版本：**0.0.9a-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
 
 [English](README.md)
 
@@ -205,7 +205,7 @@ CRN 的 `createrailwaysnavigator:travel_section` 指令官方中文译名为**�
 ./gradlew build
 ```
 
-jar 输出到 `build/libs/create_trains_scheduling-0.0.9-alpha-1.21.1Neo-C6.jar`。
+jar 输出到 `build/libs/create_trains_scheduling-0.0.9a-alpha-1.21.1Neo-C6.jar`。
 
 开发自检（`./gradlew runData`）会验证 JSON ↔ Schedule 往返以及所有 mixin 是否应用。
 
