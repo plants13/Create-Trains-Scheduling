@@ -23,7 +23,7 @@ import de.mrjulsen.crn.data.schedule.condition.TrainSeparationCondition;
 @Mixin(value = TrainSeparationCondition.class, remap = false)
 public abstract class TrainSeparationQueueMixin {
 
-    @Inject(method = "remainingHoldTicks", at = @At("RETURN"), remap = false)
+    @Inject(method = "remainingHoldTicks", at = @At("RETURN"), remap = false, cancellable = true, require = 1)
     private static void cts$applyStationQueue(Train train, ScheduleEntry entry, CallbackInfoReturnable<Long> cir) {
         long original = cir.getReturnValue();
         long interval = cts$interval(entry);
