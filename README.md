@@ -6,7 +6,7 @@ A NeoForge 1.21.1 addon for [Create](https://github.com/Creators-of-Create/Creat
 dispatch tools, integrated into [Xaero's World Map](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map)
 and [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap).
 
-Current version: **0.0.9b-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
+Current version: **0.0.10-alpha-1.21.1Neo-C6** (Minecraft 1.21.1 / NeoForge / Create 6).
 
 [简体中文](README_ZH.md)
 
@@ -166,6 +166,11 @@ The common config file is `config/create_trains_scheduling-common.toml`:
 | `maxRouteStations` | `64` | Maximum number of stations in a single route (command or map dispatch), 1–512 |
 
 The client config file `config/create_trains_scheduling-client.toml` has `clipboardAccessWarning` (default `true`):
+
+The startup config file `config/create_trains_scheduling-startup.toml` has `registerDepartureCountdown` (default `true`).
+Set it to `false` on the server to skip registering the synced `create:display_source` entry, which allows clients
+without this mod to join (the station departure countdown and its display links become unavailable). This is read at
+startup and requires a restart.
 the first 3 multiplayer joins show a chat warning that the schedule editor lets the server read or overwrite the clipboard.
 
 ### ComputerCraft bridge
@@ -214,7 +219,7 @@ documentation uses "circuit", while UI labels taken from CRN keep CRN's official
 ./gradlew build
 ```
 
-The jar is written to `build/libs/create_trains_scheduling-0.0.9b-alpha-1.21.1Neo-C6.jar`.
+The jar is written to `build/libs/create_trains_scheduling-0.0.10-alpha-1.21.1Neo-C6.jar`.
 
 Development self-checks (`./gradlew runData`) verify the JSON ↔ Schedule round-trip and that all
 mixins apply.
