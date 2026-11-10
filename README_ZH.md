@@ -62,7 +62,7 @@
 | ComputerCraft / CC:Tweaked | 可选，启用 `cts_station` 外设 |
 | Java | 21 |
 
-版本混用（客户端与服务端模组版本不同）仅在 0.0.3 及以后受支持，且可能缺失功能 —— 见 [COMPATIBILITY_ZH.md](COMPATIBILITY_ZH.md)。另外，**0.0.8+ 服务端要求客户端至少 0.0.8**；更旧的客户端（即使装了模组）也会因注册表同步而无法进服。
+版本混用（客户端与服务端模组版本不同）仅在 0.0.3 及以后受支持，且可能缺失功能 —— 见 [COMPATIBILITY_ZH.md](COMPATIBILITY_ZH.md)。另外，**0.0.8+ 服务端要求客户端至少 0.0.8**；更旧的客户端（即使装了模组）也会因注册表同步而无法进服。0.0.10+ 服务端可以通过设置 `registerDepartureCountdown = false` 解除这一要求（此时所有人的发车倒计时都不可用）。
 
 ## 安装
 
@@ -72,7 +72,7 @@
 **服务端**：Create、Create Railways Navigator、DragonLib、NeoForge、本模组。
 地图模组属于客户端模组，服务端无需安装。
 
-两端应运行**同一版本**的本模组。**从 0.0.8 起客户端也必须安装本模组，且版本不能低于 0.0.8**：0.0.8 往 Create 的同步注册表里新增了条目，更旧的客户端（或未安装模组的客户端）会在注册表同步阶段被拒绝。0.0.7 及以前，只装服务端即可使用命令与 ComputerCraft 桥接。
+两端应运行**同一版本**的本模组。**从 0.0.8 起客户端也必须安装本模组，且版本不能低于 0.0.8**：0.0.8 往 Create 的同步注册表里新增了条目，更旧的客户端（或未安装模组的客户端）会在注册表同步阶段被拒绝。0.0.7 及以前，只装服务端即可使用命令与 ComputerCraft 桥接。从 0.0.10 起服务端可以用 `registerDepartureCountdown = false` 跳过该注册表条目，让未安装模组的客户端也能进服，代价是发车倒计时不可用。
 
 ## 使用
 
@@ -160,11 +160,12 @@
 | `maxRouteStations` | `64` | 单次进路的最大车站数（命令或地图调度），1–512 |
 
 客户端配置文件 `config/create_trains_scheduling-client.toml` 中有 `clipboardAccessWarning`（默认 `true`）：
+前 3 次加入多人游戏时会提示“时刻表编辑器允许服务器读取或覆盖剪贴板”。
 
 启动配置文件 `config/create_trains_scheduling-startup.toml` 中有 `registerDepartureCountdown`（默认 `true`）。
 在服务端设为 `false` 可跳过注册同步的 `create:display_source` 条目，从而允许未安装本模组的客户端加入
 （车站发车倒计时及其显示链接将不可用）。该配置只在启动时读取，修改后需要重启。
-前 3 次加入多人游戏时会提示“时刻表编辑器允许服务器读取或覆盖剪贴板”。
+该选项从 0.0.10 起可用；0.0.8 – 0.0.9b 始终会注册该条目。
 
 ### ComputerCraft 桥接
 

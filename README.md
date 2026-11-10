@@ -65,7 +65,7 @@ Every dispatch action is validated by the server and checked against [permission
 | ComputerCraft / CC:Tweaked | optional, enables the `cts_station` peripheral |
 | Java | 21 |
 
-Version mixing (different mod versions on client and server) is only supported from 0.0.3 onward and may lose features — see [COMPATIBILITY.md](COMPATIBILITY.md). In particular, **0.0.8+ servers require 0.0.8+ clients**; older clients (even with the mod installed) cannot join because of registry sync.
+Version mixing (different mod versions on client and server) is only supported from 0.0.3 onward and may lose features — see [COMPATIBILITY.md](COMPATIBILITY.md). In particular, **0.0.8+ servers require 0.0.8+ clients**; older clients (even with the mod installed) cannot join because of registry sync. A 0.0.10+ server can lift that requirement by setting `registerDepartureCountdown = false` (the departure countdown then stops working for everyone).
 
 ## Installation
 
@@ -75,7 +75,7 @@ and either Xaero's World Map or JourneyMap.
 **Server**: Create, Create Railways Navigator, DragonLib, NeoForge, and this mod.
 The map mods are client-side and do not need to be installed on the server.
 
-Both sides should run the **same** version of this mod. **Since 0.0.8 the client must have the mod installed as well, and it must be version 0.0.8 or newer**: 0.0.8 registers an entry in one of Create's synced registries, so older clients (or clients without the mod) are rejected during registry sync. Up to 0.0.7 a server-only installation was enough for commands and the ComputerCraft bridge.
+Both sides should run the **same** version of this mod. **Since 0.0.8 the client must have the mod installed as well, and it must be version 0.0.8 or newer**: 0.0.8 registers an entry in one of Create's synced registries, so older clients (or clients without the mod) are rejected during registry sync. Up to 0.0.7 a server-only installation was enough for commands and the ComputerCraft bridge. From 0.0.10 the server can opt out of that registry entry with `registerDepartureCountdown = false`, allowing clients without the mod to join at the cost of the departure countdown.
 
 ## Usage
 
@@ -166,12 +166,12 @@ The common config file is `config/create_trains_scheduling-common.toml`:
 | `maxRouteStations` | `64` | Maximum number of stations in a single route (command or map dispatch), 1–512 |
 
 The client config file `config/create_trains_scheduling-client.toml` has `clipboardAccessWarning` (default `true`):
+the first 3 multiplayer joins show a chat warning that the schedule editor lets the server read or overwrite the clipboard.
 
 The startup config file `config/create_trains_scheduling-startup.toml` has `registerDepartureCountdown` (default `true`).
 Set it to `false` on the server to skip registering the synced `create:display_source` entry, which allows clients
 without this mod to join (the station departure countdown and its display links become unavailable). This is read at
-startup and requires a restart.
-the first 3 multiplayer joins show a chat warning that the schedule editor lets the server read or overwrite the clipboard.
+startup and requires a restart. The option is available from 0.0.10; 0.0.8 – 0.0.9b always register the entry.
 
 ### ComputerCraft bridge
 
