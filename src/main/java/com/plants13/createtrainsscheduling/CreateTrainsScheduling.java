@@ -40,9 +40,14 @@ public class CreateTrainsScheduling {
     public static DeferredHolder<DisplaySource, DepartureCountdownDisplaySource> DEPARTURE_COUNTDOWN;
 
     public CreateTrainsScheduling(IEventBus modEventBus, ModContainer modContainer) {
-        DISPLAY_SOURCES = DeferredRegister.create(CreateRegistries.DISPLAY_SOURCE, MODID);
-        DEPARTURE_COUNTDOWN = DISPLAY_SOURCES.register("departure_countdown", DepartureCountdownDisplaySource::new);
-        DISPLAY_SOURCES.register(modEventBus);
+        modContainer.registerConfig(ModConfig.Type.STARTUP, StartupConfig.SPEC);
+        if (StartupConfig.registerDepartureCountdown()) {
+            DISPLAY_SOURCES = DeferredRegister.create(CreateRegistries.DISPLAY_SOURCE, MODID);
+            DEPARTURE_COUNTDOWN = DISPLAY_SOURCES.register("departure_countdown", DepartureCountdownDisplaySource::new);
+            DISPLAY_SOURCES.register(modEventBus);
+        } else {
+            LOGGER.info("[CTS] departure countdown display source is not registered (startup config)");
+        }
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::gatherData);
 
@@ -95,7 +100,9 @@ public class CreateTrainsScheduling {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("{} loaded alongside Create {}", MODID, Create.ID);
-        DisplaySource.BY_BLOCK.add(AllBlocks.TRACK_STATION.get(), DEPARTURE_COUNTDOWN.get());
+        if (DEPARTURE_COUNTDOWN != null) {
+            DisplaySource.BY_BLOCK.add(AllBlocks.TRACK_STATION.get(), DEPARTURE_COUNTDOWN.get());
+        }
         LOGGER.info("Railway manager: {}", Create.RAILWAYS);
     }
 }

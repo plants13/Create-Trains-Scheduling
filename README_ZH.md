@@ -6,7 +6,7 @@
 并集成到 [Xaero 的世界地图](https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map) 与
 [JourneyMap](https://www.curseforge.com/minecraft/mc-mods/journeymap) 中。
 
-当前版本：**0.0.9b-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
+当前版本：**0.0.10-alpha-1.21.1Neo-C6**（Minecraft 1.21.1 / NeoForge / Create 6）。
 
 [English](README.md)
 
@@ -160,6 +160,10 @@
 | `maxRouteStations` | `64` | 单次进路的最大车站数（命令或地图调度），1–512 |
 
 客户端配置文件 `config/create_trains_scheduling-client.toml` 中有 `clipboardAccessWarning`（默认 `true`）：
+
+启动配置文件 `config/create_trains_scheduling-startup.toml` 中有 `registerDepartureCountdown`（默认 `true`）。
+在服务端设为 `false` 可跳过注册同步的 `create:display_source` 条目，从而允许未安装本模组的客户端加入
+（车站发车倒计时及其显示链接将不可用）。该配置只在启动时读取，修改后需要重启。
 前 3 次加入多人游戏时会提示“时刻表编辑器允许服务器读取或覆盖剪贴板”。
 
 ### ComputerCraft 桥接
@@ -205,7 +209,7 @@ CRN 的 `createrailwaysnavigator:travel_section` 指令官方中文译名为**�
 ./gradlew build
 ```
 
-jar 输出到 `build/libs/create_trains_scheduling-0.0.9b-alpha-1.21.1Neo-C6.jar`。
+jar 输出到 `build/libs/create_trains_scheduling-0.0.10-alpha-1.21.1Neo-C6.jar`。
 
 开发自检（`./gradlew runData`）会验证 JSON ↔ Schedule 往返以及所有 mixin 是否应用。
 
