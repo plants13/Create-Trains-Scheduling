@@ -3,6 +3,7 @@
   "minVersion": "0.8.5",
   "package": "com.plants13.createtrainsscheduling.mixin",
   "compatibilityLevel": "JAVA_21",
+  "plugin": "com.plants13.createtrainsscheduling.mixin.CtsMixinPlugin",
   "mixins": [
     "NavigationTickMixin",
     "SignalEdgeGroupMixin",
@@ -20,6 +21,6 @@
   ],
   "server": [],
   "injectors": {
-    "defaultRequire": 0
+    "defaultRequire": 1
   }
 }

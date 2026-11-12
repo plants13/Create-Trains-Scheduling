@@ -22,7 +22,8 @@ public abstract class SignalEdgeGroupMixin {
     @Inject(
             method = "isOccupiedUnless(Lcom/simibubi/create/content/trains/entity/Train;)Z",
             at = @At("HEAD"),
-            cancellable = true)
+            cancellable = true,
+            require = 1)
     private void cts$allowOverride(Train train, CallbackInfoReturnable<Boolean> cir) {
         if (SignalOverrideManager.isOverriding(train)) {
             cir.setReturnValue(false);

@@ -28,6 +28,9 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
  * 临时诊断：打印每次 CRN 扣车计算的输入（间隔、过滤条件、上次发车时间、当前 game time）。
+ *
+ * <p>默认不参与 mixin 应用：{@link CtsMixinPlugin} 只在 JVM 参数 {@code -Dcts.debugSeparation=true}
+ * 时启用它；启用后仍需公共配置 {@code debugLogging = true} 才会输出日志。
  */
 @Mixin(value = TrainSeparationCondition.class, remap = false)
 public abstract class TrainSeparationHoldDebugMixin {

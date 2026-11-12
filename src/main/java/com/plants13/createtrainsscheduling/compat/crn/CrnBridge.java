@@ -23,8 +23,10 @@ import de.mrjulsen.crn.data.settings.TrainLine;
 /**
  * CRN（Create Railways Navigator）集成入口。
  *
- * <p><b>项目铁律</b>：整个项目只有这个包允许 {@code import de.mrjulsen.crn.*}。
- * 业务代码通过我们自己的接口消费数据，将来 CRN API 变动时只需要改这里。
+ * <p><b>CRN 边界约定</b>：{@code import de.mrjulsen.crn.*} 只允许出现在本包，以及<b>直接以 CRN 类为注入目标</b>的
+ * mixin（{@code ScheduleRuntimeSeparationMixin}、{@code TrainSeparationQueueMixin}、
+ * {@code TrainSeparationHoldDebugMixin}）中——这些 mixin 的 {@code @Mixin} 目标就是 CRN 的类，绕不开引用。
+ * 业务代码一律通过本包接口消费 CRN 数据；CRN 升级时需要检查的范围因此限制在这几个文件里。
  *
  * <p>CRN 是硬依赖，所以这里不做 {@code isLoaded} 判断；若依赖缺失，FML 会在加载阶段就拒绝启动，
  * 不会走到这个类。

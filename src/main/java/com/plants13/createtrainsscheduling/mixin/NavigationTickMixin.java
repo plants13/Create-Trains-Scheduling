@@ -28,7 +28,7 @@ public abstract class NavigationTickMixin {
     @Shadow
     public Train train;
 
-    @WrapMethod(method = "tick", remap = false)
+    @WrapMethod(method = "tick", remap = false, require = 1)
     private void cts$wrapTick(Level level, Operation<Void> original) {
         SignalOverrideManager.TICKING.set(this.train);
         try {
