@@ -42,28 +42,16 @@ public class Config {
 
     /** 调试日志开关，配置不可用时退回 false。 */
     public static boolean debugLogging() {
-        try {
-            return DEBUG_LOGGING.get();
-        } catch (IllegalStateException ignored) {
-            return false;
-        }
+        return ConfigAccess.get(DEBUG_LOGGING, false);
     }
 
     /** 单次进路最大车站数，配置不可用时退回 64。 */
     public static int maxRouteStations() {
-        try {
-            return MAX_ROUTE_STATIONS.get();
-        } catch (IllegalStateException ignored) {
-            return 64;
-        }
+        return ConfigAccess.get(MAX_ROUTE_STATIONS, 64);
     }
 
     /** 读取默认授权时长，配置不可用时退回 1200 ticks。 */
     public static int forceReleaseDurationTicks() {
-        try {
-            return FORCE_RELEASE_DURATION_TICKS.get();
-        } catch (IllegalStateException ignored) {
-            return 1200;
-        }
+        return ConfigAccess.get(FORCE_RELEASE_DURATION_TICKS, 1200);
     }
 }

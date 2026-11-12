@@ -125,4 +125,13 @@ public final class ClientEvents {
                             Component.translatable("create_trains_scheduling.clipboard.warning"), false);
         }
     }
+
+    /** 断线/退出世界时清空客户端缓存，避免缓存跨服务器残留。 */
+    @SubscribeEvent
+    public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        TrainStatusCache.clear();
+        CircuitInfoCache.clear();
+        PermissionCache.clear();
+        StationDoorRadiusClient.clear();
+    }
 }

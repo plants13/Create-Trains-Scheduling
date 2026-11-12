@@ -42,6 +42,11 @@ public final class DirectDispatchTracker {
         return train != null && ACTIVE.contains(train.id);
     }
 
+    /** 服务器停止时清空跟踪状态。 */
+    public static void clear() {
+        ACTIVE.clear();
+    }
+
     public static void tick(MinecraftServer server) {
         if (ACTIVE.isEmpty()) {
             return;

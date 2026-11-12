@@ -2,9 +2,7 @@
 
 package com.plants13.createtrainsscheduling.server;
 
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,19 +30,16 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * 列车时刻表的导出/导入（GUI 触发）。
  *
  * <p>与手持时刻表命令共用同一套安全边界：{@code schedule} 权限、cooldown、一次性 token、
- * 大小限制与 {@link ScheduleJsonValidator} 结构校验。剪贴板内容永远只当作 JSON 数据。
+ * 大小限制与 {@link ScheduleJsonValidator} 结构校验；这些机制本身委托给
+ * {@link ClipboardExchange}。剪贴板内容永远只当作 JSON 数据。
  */
 public final class TrainScheduleService {
 
     public static final String KIND_TRAIN_SCHEDULE = EditorJsonPayload.KIND_TRAIN_SCHEDULE;
 
-    private static final long COOLDOWN_MS = 2000L;
-    private static final long TOKEN_TTL_MS = 15000L;
+    private record PendingImport(UUID trainId, boolean pause) {}
 
-    private record PendingImport(UUID token, long expiresAt, UUID trainId, boolean pause) {}
-
-    private static final Map<UUID, PendingImport> PENDING = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> LAST_ACTION = new ConcurrentHashMap<>();
+    private static final ClipboardExchange<PendingImport> EXCHANGE = new ClipboardExchange<>();
 
     private TrainScheduleService() {}
 
@@ -59,13 +54,10 @@ public final class TrainScheduleService {
                     ModPermission.SCHEDULE.id()));
             return;
         }
-        long now = System.currentTimeMillis();
-        Long last = LAST_ACTION.get(player.getUUID());
-        if (last != null && now - last < COOLDOWN_MS) {
+        if (!EXCHANGE.tryBegin(player)) {
             fail(player, Component.translatable("create_trains_scheduling.train_schedule.cooldown"));
             return;
         }
-        LAST_ACTION.put(player.getUUID(), now);
 
         switch (action) {
             case TrainScheduleActionPayload.ACTION_EXPORT -> export(player, train);
@@ -129,9 +121,7 @@ public final class TrainScheduleService {
             fail(player, Component.translatable("create_trains_scheduling.schedule_editor.client_missing"));
             return;
         }
-        UUID token = UUID.randomUUID();
-        PENDING.put(player.getUUID(), new PendingImport(token, System.currentTimeMillis() + TOKEN_TTL_MS,
-                train.id, pause));
+        UUID token = EXCHANGE.issue(player.getUUID(), new PendingImport(train.id, pause));
         PacketDistributor.sendToPlayer(player, new ClipboardRequestPayload(token));
         player.displayClientMessage(
                 Component.translatable("create_trains_scheduling.train_schedule.import_requested"), false);
@@ -139,13 +129,11 @@ public final class TrainScheduleService {
 
     /** @return true 表示这次剪贴板回传属于列车导入，已被消费。 */
     public static boolean handleClipboardContent(ServerPlayer player, UUID token, String text) {
-        PendingImport pending = PENDING.get(player.getUUID());
-        if (pending == null || !pending.token()
-                .equals(token)) {
+        ClipboardExchange.Pending<PendingImport> pending = EXCHANGE.consume(player.getUUID(), token);
+        if (pending == null) {
             return false;
         }
-        PENDING.remove(player.getUUID());
-        if (System.currentTimeMillis() > pending.expiresAt()) {
+        if (pending.isExpired()) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
             return true;
         }
@@ -154,7 +142,8 @@ public final class TrainScheduleService {
                     ModPermission.SCHEDULE.id()));
             return true;
         }
-        Train train = Create.RAILWAYS.trains.get(pending.trainId());
+        Train train = Create.RAILWAYS.trains.get(pending.data()
+                .trainId());
         if (train == null) {
             fail(player, Component.translatable("create_trains_scheduling.train_schedule.no_train"));
             return true;
@@ -180,7 +169,8 @@ public final class TrainScheduleService {
             }
             boolean wasAuto = train.runtime.isAutoSchedule;
             train.runtime.setSchedule(schedule, wasAuto);
-            if (pending.pause()) {
+            if (pending.data()
+                    .pause()) {
                 train.runtime.paused = true;
             }
             player.displayClientMessage(Component.translatable(
@@ -193,6 +183,11 @@ public final class TrainScheduleService {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.invalid_json"));
         }
         return true;
+    }
+
+    /** 服务器停止时清空待处理 token 与冷却记录。 */
+    public static void clearExchange() {
+        EXCHANGE.clear();
     }
 
     private static void fail(ServerPlayer player, Component message) {

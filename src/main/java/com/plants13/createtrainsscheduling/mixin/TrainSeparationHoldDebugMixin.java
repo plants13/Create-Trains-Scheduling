@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.compat.crn.SeparationInterop;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.content.trains.schedule.ScheduleEntry;
-import com.simibubi.create.content.trains.schedule.condition.ScheduleWaitCondition;
 
 import de.mrjulsen.crn.api.core.RailwayBackendApi;
 import de.mrjulsen.crn.data.schedule.condition.ETrainFilter;
@@ -53,7 +53,7 @@ public abstract class TrainSeparationHoldDebugMixin {
         }
         LAST_LOG.put(train.id, now);
 
-        TrainSeparationCondition condition = findCondition(entry);
+        TrainSeparationCondition condition = SeparationInterop.find(entry);
         if (condition == null) {
             return;
         }
@@ -85,19 +85,5 @@ public abstract class TrainSeparationHoldDebugMixin {
                 lastDeparture,
                 now,
                 cir.getReturnValue());
-    }
-
-    private static TrainSeparationCondition findCondition(ScheduleEntry entry) {
-        if (entry.conditions == null) {
-            return null;
-        }
-        for (var group : entry.conditions) {
-            for (ScheduleWaitCondition condition : group) {
-                if (condition instanceof TrainSeparationCondition separation) {
-                    return separation;
-                }
-            }
-        }
-        return null;
     }
 }

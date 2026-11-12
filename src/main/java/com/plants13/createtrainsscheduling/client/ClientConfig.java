@@ -2,6 +2,8 @@
 
 package com.plants13.createtrainsscheduling.client;
 
+import com.plants13.createtrainsscheduling.ConfigAccess;
+
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -28,19 +30,11 @@ public final class ClientConfig {
     private ClientConfig() {}
 
     public static boolean clipboardWarningEnabled() {
-        try {
-            return CLIPBOARD_WARNING.get();
-        } catch (IllegalStateException ignored) {
-            return true;
-        }
+        return ConfigAccess.get(CLIPBOARD_WARNING, true);
     }
 
     public static int warningsShown() {
-        try {
-            return CLIPBOARD_WARNINGS_SHOWN.get();
-        } catch (IllegalStateException ignored) {
-            return 3;
-        }
+        return ConfigAccess.get(CLIPBOARD_WARNINGS_SHOWN, 3);
     }
 
     public static void markWarned() {

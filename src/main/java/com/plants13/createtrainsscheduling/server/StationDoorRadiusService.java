@@ -66,4 +66,9 @@ public final class StationDoorRadiusService {
             PacketDistributor.sendToPlayer(player, new StationDoorRadiusSyncPayload(pos, radius));
         }
     }
+
+    /** 服务器停止时清空按玩家的节流记录。 */
+    public static void clear() {
+        LAST_ACTION.clear();
+    }
 }

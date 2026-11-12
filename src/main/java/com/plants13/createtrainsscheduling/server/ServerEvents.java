@@ -47,9 +47,15 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
+        // 所有 per-server 静态状态在这里集中清理；新增缓存时记得登记到这里。
         SignalOverrideManager.clearAll();
         SignalOverrideManager.TICKING.remove();
         StationDepartureQueue.clear();
+        OneOffScheduleTracker.clear();
+        DirectDispatchTracker.clear();
+        StationDoorRadiusService.clear();
+        TrainScheduleService.clearExchange();
+        ScheduleEditorService.clearExchange();
     }
 
     @SubscribeEvent
