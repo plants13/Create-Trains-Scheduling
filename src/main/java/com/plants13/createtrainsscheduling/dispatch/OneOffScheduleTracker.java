@@ -110,6 +110,12 @@ public final class OneOffScheduleTracker {
         COMPLETED_AT.remove(id);
     }
 
+    /** 服务器停止时清空跟踪状态。 */
+    public static void clear() {
+        ACTIVE.clear();
+        COMPLETED_AT.clear();
+    }
+
     private static String trainName(Train train, UUID id) {
         return train.name == null ? id.toString() : train.name.getString();
     }

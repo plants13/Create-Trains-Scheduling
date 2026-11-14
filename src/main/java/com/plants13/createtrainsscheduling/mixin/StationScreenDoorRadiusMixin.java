@@ -27,7 +27,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @Mixin(value = StationScreen.class, remap = false)
 public abstract class StationScreenDoorRadiusMixin {
 
-    @Inject(method = "init", at = @At("TAIL"), remap = false)
+    @Inject(method = "init", at = @At("TAIL"), remap = false, require = 1)
     private void cts$addDoorRadiusWidget(CallbackInfo callback) {
         AbstractStationScreenAccessor accessor = (AbstractStationScreenAccessor) (Object) this;
         StationBlockEntity station = accessor.cts$blockEntity();
@@ -62,7 +62,7 @@ public abstract class StationScreenDoorRadiusMixin {
         }
     }
 
-    @Inject(method = "removed", at = @At("TAIL"), remap = false)
+    @Inject(method = "removed", at = @At("TAIL"), remap = false, require = 1)
     private void cts$clearDoorRadiusClient(CallbackInfo callback) {
         StationDoorRadiusClient.clear();
     }

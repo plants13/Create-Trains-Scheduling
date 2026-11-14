@@ -25,8 +25,8 @@ Since 0.0.10 the server can skip that registration with the startup config
 | --- | --- | --- |
 | 0.0.1 – 0.0.7 | can join; map UI, clipboard editor and display features are unavailable | see matrix below |
 | 0.0.8 – 0.0.9b | cannot join (registry sync fails with an "unknown key" error); no workaround | cannot join either — the client must be 0.0.8 or newer |
-| 0.0.10, default (`registerDepartureCountdown = true`) | cannot join (same registry error) | client must be 0.0.8 or newer |
-| 0.0.10, `registerDepartureCountdown = false` | can join; the station departure countdown (DCD) and its display links are unavailable | can join; everything the client version and the server version both support works, except DCD |
+| 0.0.10+, default (`registerDepartureCountdown = true`) | cannot join (same registry error) | client must be 0.0.8 or newer |
+| 0.0.10+, `registerDepartureCountdown = false` | can join; the station departure countdown (DCD) and its display links are unavailable | can join; everything the client version and the server version both support works, except DCD |
 
 The switch lives in `config/create_trains_scheduling-startup.toml`, is read at startup, and requires a
 server restart. It affects **every** client, modded or not: while it is off, nobody sees a departure
@@ -43,11 +43,11 @@ Several releases share the same network protocol. They are grouped in the matrix
 | P3 | 0.0.3, 0.0.3a, 0.0.3b, 0.0.4, 0.0.5 | Payload channels are **optional**; identical network code. 0.0.3a/0.0.3b changed client rendering only; 0.0.4 added the ComputerCraft bridge; 0.0.5 deduplicated it. None of these changed the wire protocol. |
 | P4 | 0.0.6 | Superset of P3: adds optional clipboard/editor channels. |
 | P5 | 0.0.7 | Superset of P4: adds the optional GUI train-schedule action channel. |
-| P6 | 0.0.8, 0.0.8a, 0.0.9, 0.0.9a, 0.0.9b, 0.0.10 | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. 0.0.9 adds optional station-door-radius channels and server-side separation queue behaviour. 0.0.10 adds no channels; it adds the startup config that can skip the synced entry. |
+| P6 | 0.0.8, 0.0.8a, 0.0.9, 0.0.9a, 0.0.9b, 0.0.10, 0.0.10a | Same wire protocol as P5, but adds a **synced** `create:display_source` registry entry. 0.0.9 adds optional station-door-radius channels and server-side separation queue behaviour. 0.0.10 adds no channels; it adds the startup config that can skip the synced entry. 0.0.10a is a fix-only build with no wire or registry change. |
 
 ## Matrix
 
-| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 | 0.0.7 | 0.0.8 – 0.0.8a | 0.0.9 – 0.0.10 |
+| Client ↓ / Server → | 0.0.1 | 0.0.2 | 0.0.3 – 0.0.5 | 0.0.6 | 0.0.7 | 0.0.8 – 0.0.8a | 0.0.9 – 0.0.10a |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **0.0.1** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **0.0.2** | ❌ | ✅ | ⚠️ MS / CRN / QD / ED* | ⚠️ MS / CRN / ED* | ⚠️ MS / CRN / ED / TSE* | ❌ | ❌ |
@@ -59,16 +59,16 @@ Several releases share the same network protocol. They are grouped in the matrix
 | **0.0.6** | ❌ | ⚠️ MS / CRN / ED (QD works) | ⚠️ ED | ✅ | ⚠️ TSE | ❌ | ❌ |
 | **0.0.7** | ❌ | ⚠️ MS / CRN / ED / TSE (QD works) | ⚠️ ED / TSE | ⚠️ TSE | ✅ | ❌ | ❌ |
 | **0.0.8 – 0.0.8a** | ❌ | ⚠️ MS / CRN / ED / TSE / DCD (QD works) | ⚠️ ED / TSE / DCD | ⚠️ TSE / DCD | ⚠️ DCD | ✅ | ⚠️ DR |
-| **0.0.9 – 0.0.10** | ❌ | ⚠️ MS / CRN / ED / TSE / DCD / DQ / DR (QD works) | ⚠️ ED / TSE / DCD / DQ / DR | ⚠️ TSE / DCD / DQ / DR | ⚠️ DCD / DQ / DR | ⚠️ DQ / DR | ✅ † |
+| **0.0.9 – 0.0.10a** | ❌ | ⚠️ MS / CRN / ED / TSE / DCD / DQ / DR (QD works) | ⚠️ ED / TSE / DCD / DQ / DR | ⚠️ TSE / DCD / DQ / DR | ⚠️ DCD / DQ / DR | ⚠️ DQ / DR | ✅ † |
 
 \* A 0.0.2 client does not have the UI for these features at all. The cell only says the server-side
 features are not reachable from this client, or that the client has no UI for them.
 
-† With the server's default `registerDepartureCountdown = true`. A 0.0.10 server with
+† With the server's default `registerDepartureCountdown = true`. A 0.0.10+ server with
 `registerDepartureCountdown = false` can still be joined by every client, but DCD is unavailable for all of
 them (see [Client mod requirement](#client-mod-requirement)).
 
-0.0.9 – 0.0.10 are join-compatible with 0.0.8 – 0.0.8a in both directions: the synced registry entry is
+0.0.9 – 0.0.10a are join-compatible with 0.0.8 – 0.0.8a in both directions: the synced registry entry is
 identical and 0.0.9's new channels are optional. The separation queue (DQ) needs a 0.0.9+ server; the door
 radius setting (DR) needs a 0.0.9+ server to apply and 0.0.9+ on both sides to configure.
 
@@ -108,9 +108,9 @@ Feature codes:
 ## Recommendations
 
 - Run the **same version on client and server**. Mixed pairs work up to 0.0.7 but with feature gaps;
-  **0.0.8+ servers require 0.0.8+ clients** unless the server is 0.0.10 and disables the display source.
+  **0.0.8+ servers require 0.0.8+ clients** unless the server is 0.0.10+ and disables the display source.
 - Servers on 0.0.8 – 0.0.9b cannot accept unmodded clients. If a server must stay vanilla-client friendly,
-  upgrade to 0.0.10 and set `registerDepartureCountdown = false` in
+  upgrade to 0.0.10+ and set `registerDepartureCountdown = false` in
   `config/create_trains_scheduling-startup.toml`, then restart.
 - When the display source is disabled, the station departure countdown and any existing countdown display
   links stop working for every client. Remove or repurpose those links first; re-enabling the option after a

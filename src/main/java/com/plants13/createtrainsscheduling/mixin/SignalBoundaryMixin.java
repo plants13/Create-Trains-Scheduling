@@ -24,7 +24,8 @@ public abstract class SignalBoundaryMixin {
     @Inject(
             method = "isForcedRed(Lcom/simibubi/create/content/trains/graph/TrackNode;)Z",
             at = @At("HEAD"),
-            cancellable = true)
+            cancellable = true,
+            require = 1)
     private void cts$allowForcedRedOverride(TrackNode side, CallbackInfoReturnable<Boolean> cir) {
         Train ticking = SignalOverrideManager.TICKING.get();
         if (ticking != null && SignalOverrideManager.isOverriding(ticking)) {

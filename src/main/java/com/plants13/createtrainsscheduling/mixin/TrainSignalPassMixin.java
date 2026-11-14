@@ -25,12 +25,12 @@ import com.simibubi.create.content.trains.signal.SignalBoundary;
 @Mixin(value = Train.class, remap = false)
 public abstract class TrainSignalPassMixin {
 
-    @Inject(method = "frontSignalListener", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "frontSignalListener", at = @At("RETURN"), cancellable = true, require = 1)
     private void cts$wrapFrontSignalListener(CallbackInfoReturnable<TravellingPoint.IEdgePointListener> cir) {
         cir.setReturnValue(cts$wrap(cir.getReturnValue()));
     }
 
-    @Inject(method = "backSignalListener", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "backSignalListener", at = @At("RETURN"), cancellable = true, require = 1)
     private void cts$wrapBackSignalListener(CallbackInfoReturnable<TravellingPoint.IEdgePointListener> cir) {
         cir.setReturnValue(cts$wrap(cir.getReturnValue()));
     }

@@ -2,7 +2,10 @@
 
 package com.plants13.createtrainsscheduling.dispatch;
 
+import java.util.List;
+
 import com.plants13.createtrainsscheduling.Config;
+import com.plants13.createtrainsscheduling.ConfigAccess;
 
 import net.minecraft.server.level.ServerPlayer;
 
@@ -25,17 +28,13 @@ public final class ForceReleasePermission {
         }
         String name = player.getGameProfile().getName();
         String uuid = player.getStringUUID();
-        try {
-            for (String entry : Config.FORCE_RELEASE_PLAYERS.get()) {
-                if (entry == null) {
-                    continue;
-                }
-                if (entry.equalsIgnoreCase(name) || entry.equalsIgnoreCase(uuid)) {
-                    return true;
-                }
+        for (String entry : ConfigAccess.get(Config.FORCE_RELEASE_PLAYERS, List.of())) {
+            if (entry == null) {
+                continue;
             }
-        } catch (IllegalStateException ignored) {
-            // 配置尚未加载（例如数据生成阶段）
+            if (entry.equalsIgnoreCase(name) || entry.equalsIgnoreCase(uuid)) {
+                return true;
+            }
         }
         return false;
     }

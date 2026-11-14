@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.compat.crn.SeparationInterop;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.content.trains.schedule.ScheduleEntry;
-import com.simibubi.create.content.trains.schedule.condition.ScheduleWaitCondition;
 
 import de.mrjulsen.crn.api.core.RailwayBackendApi;
 import de.mrjulsen.crn.data.schedule.condition.ETrainFilter;
@@ -28,6 +28,9 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
  * 临时诊断：打印每次 CRN 扣车计算的输入（间隔、过滤条件、上次发车时间、当前 game time）。
+ *
+ * <p>默认不参与 mixin 应用：{@link CtsMixinPlugin} 只在 JVM 参数 {@code -Dcts.debugSeparation=true}
+ * 时启用它；启用后仍需公共配置 {@code debugLogging = true} 才会输出日志。
  */
 @Mixin(value = TrainSeparationCondition.class, remap = false)
 public abstract class TrainSeparationHoldDebugMixin {
@@ -50,7 +53,7 @@ public abstract class TrainSeparationHoldDebugMixin {
         }
         LAST_LOG.put(train.id, now);
 
-        TrainSeparationCondition condition = findCondition(entry);
+        TrainSeparationCondition condition = SeparationInterop.find(entry);
         if (condition == null) {
             return;
         }
@@ -82,19 +85,5 @@ public abstract class TrainSeparationHoldDebugMixin {
                 lastDeparture,
                 now,
                 cir.getReturnValue());
-    }
-
-    private static TrainSeparationCondition findCondition(ScheduleEntry entry) {
-        if (entry.conditions == null) {
-            return null;
-        }
-        for (var group : entry.conditions) {
-            for (ScheduleWaitCondition condition : group) {
-                if (condition instanceof TrainSeparationCondition separation) {
-                    return separation;
-                }
-            }
-        }
-        return null;
     }
 }

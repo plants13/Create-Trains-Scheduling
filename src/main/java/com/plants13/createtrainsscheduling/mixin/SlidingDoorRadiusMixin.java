@@ -23,7 +23,7 @@ import net.minecraft.core.BlockPos;
 @Mixin(value = SlidingDoorMovementBehaviour.class, remap = false)
 public class SlidingDoorRadiusMixin {
 
-    @Inject(method = "shouldOpenAt", at = @At("RETURN"), cancellable = true, remap = false)
+    @Inject(method = "shouldOpenAt", at = @At("RETURN"), cancellable = true, remap = false, require = 1)
     private void cts$limitDoorByRadius(DoorControlBehaviour controller, MovementContext context,
             CallbackInfoReturnable<Boolean> callback) {
         if (!callback.getReturnValue()) {

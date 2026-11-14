@@ -2,9 +2,7 @@
 
 package com.plants13.createtrainsscheduling.server;
 
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -35,16 +33,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
  *
  * <p><b>安全边界</b>：剪贴板内容一律当作不可信 JSON 数据，只做解析 + 结构校验 + 写入手持物品，
  * 任何情况下都不会被当作命令/代码执行；写入前必须通过权限、token、大小与结构校验。
+ * 冷却/TTL/token 机制由 {@link ClipboardExchange} 统一提供。
  */
 public final class ScheduleEditorService {
 
-    private static final long WRITE_COOLDOWN_MS = 2000L;
-    private static final long TOKEN_TTL_MS = 15000L;
-
-    private record PendingWrite(UUID token, long expiresAt) {}
-
-    private static final Map<UUID, PendingWrite> PENDING = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> LAST_WRITE = new ConcurrentHashMap<>();
+    private static final ClipboardExchange<Void> EXCHANGE = new ClipboardExchange<>();
 
     private ScheduleEditorService() {}
 
@@ -136,16 +129,12 @@ public final class ScheduleEditorService {
             source.sendFailure(Component.translatable("create_trains_scheduling.schedule_editor.client_missing"));
             return 0;
         }
-        long now = System.currentTimeMillis();
-        Long last = LAST_WRITE.get(player.getUUID());
-        if (last != null && now - last < WRITE_COOLDOWN_MS) {
+        if (!EXCHANGE.tryBegin(player)) {
             source.sendFailure(Component.translatable("create_trains_scheduling.command.writesch.cooldown"));
             return 0;
         }
-        LAST_WRITE.put(player.getUUID(), now);
 
-        UUID token = UUID.randomUUID();
-        PENDING.put(player.getUUID(), new PendingWrite(token, now + TOKEN_TTL_MS));
+        UUID token = EXCHANGE.issue(player.getUUID(), null);
         PacketDistributor.sendToPlayer(player, new ClipboardRequestPayload(token));
         source.sendSuccess(() -> Component.translatable("create_trains_scheduling.command.writesch.requested"), false);
         return 1;
@@ -160,14 +149,12 @@ public final class ScheduleEditorService {
     }
 
     public static boolean handleClipboardContent(ServerPlayer player, UUID token, String text) {
-        PendingWrite pending = PENDING.get(player.getUUID());
-        if (pending == null || !pending.token()
-                .equals(token)) {
+        ClipboardExchange.Pending<Void> pending = EXCHANGE.consume(player.getUUID(), token);
+        if (pending == null) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
             return false;
         }
-        PENDING.remove(player.getUUID());
-        if (System.currentTimeMillis() > pending.expiresAt()) {
+        if (pending.isExpired()) {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.timeout"));
             return true;
         }
@@ -215,6 +202,11 @@ public final class ScheduleEditorService {
             fail(player, Component.translatable("create_trains_scheduling.command.writesch.invalid_json"));
         }
         return true;
+    }
+
+    /** 服务器停止时清空待处理 token 与冷却记录。 */
+    public static void clearExchange() {
+        EXCHANGE.clear();
     }
 
     private static void fail(ServerPlayer player, Component message) {

@@ -31,10 +31,6 @@ public final class StartupConfig {
 
     /** 注册前读取；配置未就绪时保守地按 true 处理。 */
     public static boolean registerDepartureCountdown() {
-        try {
-            return REGISTER_DEPARTURE_COUNTDOWN.get();
-        } catch (IllegalStateException ignored) {
-            return true;
-        }
+        return ConfigAccess.get(REGISTER_DEPARTURE_COUNTDOWN, true);
     }
 }
