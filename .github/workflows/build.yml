@@ -23,3 +23,14 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jar-${{ github.sha }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-javadoc.jar
+          if-no-files-found: error
+          retention-days: 30
