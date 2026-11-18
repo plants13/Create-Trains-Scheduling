@@ -24,6 +24,25 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Rename jar with commit id
+        run: |
+          set -euo pipefail
+          sha="${GITHUB_SHA::7}"
+          mod_id=$(sed -n 's/^mod_id=//p' gradle.properties)
+          ver=$(sed -n 's/^mod_version=//p' gradle.properties)
+          # 把 commit id 插到版本核心号之后、构建元数据之前：
+          # 0.0.10a-alpha-1.21.1Neo-C6 -> 0.0.10a+6328c2f-alpha-1.21.1Neo-C6
+          core="${ver%%-*}"
+          if [ "$core" != "$ver" ]; then
+            rest="-${ver#*-}"
+          else
+            rest=""
+          fi
+          new_name="${mod_id}-${core}+${sha}${rest}.jar"
+          src="build/libs/${mod_id}-${ver}.jar"
+          mv "$src" "build/libs/${new_name}"
+          echo "renamed: $(basename "$src") -> ${new_name}"
+
       - name: Upload jar artifact
         uses: actions/upload-artifact@v7
         with:
