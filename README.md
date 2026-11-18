@@ -270,3 +270,12 @@ Please include:
 This project is licensed under the **Mozilla Public License 2.0** — see [LICENSE](LICENSE).
 
 Third-party components and their licenses are listed in [NOTICE](NOTICE).
+
+### About redistributing the jar
+
+MPL-2.0 already permits anyone to distribute this project's source code or compiled artifacts,
+including bundling them into modpacks or mirroring them elsewhere, without asking for permission.
+Please keep the link to this repository (i.e. how to obtain the source) and the third-party
+notices in [NOTICE](NOTICE).
+
+`LICENSE` and `NOTICE` are also shipped inside the jar under `META-INF/`.

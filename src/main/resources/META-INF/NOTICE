@@ -1,0 +1,49 @@
+Create: Trains Scheduling
+Copyright (c) 2026 plants13
+
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+https://mozilla.org/MPL/2.0/.
+
+
+Third-party components
+======================
+
+The following components are used at runtime or compile time but are NOT bundled in this project's
+jar. No source code from them has been copied into this project.
+
+- Create
+  https://github.com/Creators-of-Create/Create
+  MIT License. Used at runtime as a required dependency.
+
+- Create Railways Navigator (CRN)
+  https://github.com/MisterJulsen/Create-Train-Navigator
+  GNU Lesser General Public License v3.0. Hard runtime dependency; this mod calls its public addon
+  API (dynamic linking only).
+
+- DragonLib
+  Required by Create Railways Navigator. See its own project for licensing.
+
+- Xaero's World Map
+  https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map
+  Proprietary, closed-source. Integrated at runtime only, via mixins into its map screen; no code
+  copied and no classes bundled.
+
+- JourneyMap / JourneyMap API
+  https://www.curseforge.com/minecraft/mc-mods/journeymap
+  JourneyMap is proprietary. Its official addon API is used at compile time only (and as an optional
+  runtime soft dependency); no JourneyMap classes are bundled or copied.
+
+- Steam 'n' Rails (SnR)
+  https://github.com/Layers-of-Railways/Railway
+  GNU Lesser General Public License v3.0. Optional runtime integration only: when SnR is installed,
+  this mod looks up SnR's public schedule instruction id ("railways:waypoint_destination") through
+  Create's instruction registry to build pass-through waypoint entries. No SnR classes are imported,
+  bundled, or copied; if SnR is absent the feature falls back to normal stops.
+
+- ComputerCraft / CC:Tweaked
+  https://github.com/cc-tweaked/CC-Tweaked
+  Used at compile time against its public peripheral/Lua API, and as an optional runtime soft
+  dependency. No CC:T code is copied or bundled. See the CC:Tweaked project for its own license.
+  The integration adds no blocks or items: it attaches a read-only peripheral to Create's existing
+  station block entity.

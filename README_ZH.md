@@ -259,3 +259,10 @@ jar 输出到 `build/libs/create_trains_scheduling-0.0.10a-alpha-1.21.1Neo-C6.ja
 本项目使用 **Mozilla Public License 2.0** 许可证 —— 见 [LICENSE](LICENSE)。
 
 第三方组件及其许可证见 [NOTICE](NOTICE)。
+
+### 关于 jar 分发
+
+MPL-2.0 已允许任何人分发本项目的源码或编译产物，包括打包进整合包、镜像站转载，无需另行申请；
+但请保留本仓库链接（即源码获取方式）以及 [NOTICE](NOTICE) 中的第三方声明。
+
+`LICENSE` 与 `NOTICE` 也随 jar 一起放在 `META-INF/` 目录中发布。

@@ -11,6 +11,8 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="${mod_authors}"
 description='''${mod_description}'''
+displayURL="https://github.com/plants13/Create-Trains-Scheduling"
+issueTrackerURL="https://github.com/plants13/Create-Trains-Scheduling/issues"
 
 [[dependencies.${mod_id}]]
 modId="neoforge"
