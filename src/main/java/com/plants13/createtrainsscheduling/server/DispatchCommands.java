@@ -16,6 +16,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.audit.AuditLog;
 import com.plants13.createtrainsscheduling.dispatch.DispatchService;
 import com.plants13.createtrainsscheduling.dispatch.OneOffScheduleTracker;
 import com.plants13.createtrainsscheduling.dispatch.SignalOverrideManager;
@@ -153,10 +154,12 @@ public final class DispatchCommands {
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
         if (durationTicks <= 0) {
             SignalOverrideManager.grantNextSignal(train);
+            AuditLog.record(source.getPlayer(), "override", train.id, "next_signal", true);
             source.sendSuccess(() -> Component.translatable(PREFIX + "override.success.next_signal",
                     train.name.getString()), true);
         } else {
             SignalOverrideManager.grantTimed(train, durationTicks);
+            AuditLog.record(source.getPlayer(), "override", train.id, "timed_ticks=" + durationTicks, true);
             source.sendSuccess(() -> Component.translatable(PREFIX + "override.success.timed",
                     train.name.getString(), durationTicks, durationTicks / 20.0), true);
         }
@@ -303,6 +306,7 @@ public final class DispatchCommands {
         }
         Train train = findTrain(source, StringArgumentType.getString(ctx, "train"));
         DispatchService.Result result = DispatchService.setScheduleEnabled(train, false);
+        AuditLog.record(source.getPlayer(), "disable_schedule", train.id, "ok=" + result.success(), result.success());
         source.sendSuccess(result::message, true);
         return result.success() ? 1 : 0;
     }

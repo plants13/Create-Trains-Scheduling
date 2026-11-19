@@ -65,6 +65,7 @@
   "create_trains_scheduling.dispatch.route.ambiguous_station": "车站 '%s' 存在同名站；多站进路要求站名唯一",
   "create_trains_scheduling.dispatch.route.dispatched": "进路已下发：%s",
   "create_trains_scheduling.menu.route.hint": "左键添加车站 · 右键撤销 · Esc 取消",
+  "create_trains_scheduling.menu.search.placeholder": "输入站名搜索…",
   "create_trains_scheduling.menu.route.summary": "已选 %s 站：%s",
   "create_trains_scheduling.menu.route.confirm": "确认",
   "create_trains_scheduling.menu.route.cancel": "取消",

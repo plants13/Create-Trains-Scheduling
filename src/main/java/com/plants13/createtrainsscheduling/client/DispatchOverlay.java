@@ -63,6 +63,12 @@ public final class DispatchOverlay {
     private static int routeCancelW;
     private static int routeCancelH;
 
+    // 站名搜索结果区域（每帧布局，点击时复用）
+    private static int searchHitX;
+    private static int searchHitY;
+    private static int searchHitW;
+    private static List<StationSearch.Hit> searchHits = List.of();
+
     private DispatchOverlay() {}
 
     /**
@@ -286,8 +292,9 @@ public final class DispatchOverlay {
 
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
+        List<StationSearch.Hit> hits = StationSearch.search(StationSearch.query());
         int panelW = 360;
-        int panelH = 62;
+        int panelH = 62 + 12 + hits.size() * 12;
         int x = (screenWidth - panelW) / 2;
         int y = screenHeight - panelH - 12;
         graphics.fill(x, y, x + panelW, y + panelH, 0xE0101010);
@@ -311,7 +318,28 @@ public final class DispatchOverlay {
                 "create_trains_scheduling.menu.route.summary", picks.size(), joined),
                 x + 10, y + 21, 0xFFFFF59D, true);
 
-        int buttonY = y + 38;
+        // 站名搜索框
+        int searchY = y + 34;
+        graphics.fill(x + 10, searchY, x + panelW - 10, searchY + 12, 0xFF1A1A1A);
+        String searchText = StationSearch.query().isEmpty()
+                ? net.minecraft.network.chat.Component.translatable("create_trains_scheduling.menu.search.placeholder").getString()
+                : StationSearch.query();
+        graphics.drawString(mc.font, searchText, x + 14, searchY + 2,
+                StationSearch.query().isEmpty() ? 0xFF707070 : 0xFFE0E0E0, false);
+
+        // 搜索结果：点击加入进路（按 UUID）
+        searchHitY = searchY + 16;
+        searchHitX = x + 10;
+        searchHitW = panelW - 20;
+        searchHits = hits;
+        for (int i = 0; i < hits.size(); i++) {
+            StationSearch.Hit hit = hits.get(i);
+            int hy = searchHitY + i * 12;
+            graphics.drawString(mc.font, hit.name() + "  [#" + hit.networkIndex() + "]",
+                    searchHitX + 4, hy + 2, 0xFFB0E0FF, false);
+        }
+
+        int buttonY = y + panelH - 22;
         routeConfirmX = x + 10;
         routeConfirmY = buttonY;
         routeConfirmW = 100;
@@ -370,6 +398,15 @@ public final class DispatchOverlay {
         if (inside(guiMouseX, guiMouseY, routeConfirmX, routeConfirmY, routeConfirmW, routeConfirmH)) {
             sendRoute();
             return true;
+        }
+        // 站名搜索结果：按 UUID 加入进路，不依赖站名唯一性
+        for (int i = 0; i < searchHits.size(); i++) {
+            int hy = searchHitY + i * 12;
+            if (inside(guiMouseX, guiMouseY, searchHitX, hy, searchHitW, 12)) {
+                StationSearch.Hit hit = searchHits.get(i);
+                XaeroDispatchMenu.addRoutePick(hit.id(), hit.name());
+                return true;
+            }
         }
         double worldMouseX = projection.screenToWorldX(guiMouseX);
         double worldMouseZ = projection.screenToWorldZ(guiMouseY);
