@@ -3,6 +3,7 @@
   "create_trains_scheduling.command.yes": "是",
   "create_trains_scheduling.command.no": "否",
   "create_trains_scheduling.command.train_not_found": "找不到该名称的列车",
+  "create_trains_scheduling.command.train_ambiguous": "名称「%s」对应 %s 列同名列车，请改用列车 UUID",
   "create_trains_scheduling.command.selftest.done": "JSON <-> Schedule 往返自检已执行，结果见日志",
   "create_trains_scheduling.command.trains.empty": "当前世界没有列车",
   "create_trains_scheduling.command.trains.header": "列车（%s）：",

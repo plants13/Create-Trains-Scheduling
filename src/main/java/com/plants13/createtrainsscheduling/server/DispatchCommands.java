@@ -333,23 +333,29 @@ public final class DispatchCommands {
         return result;
     }
 
+    /**
+     * 按 UUID 或车名精确查找列车。
+     *
+     * <p>UUID 优先；车名必须唯一，存在重名列车时拒绝执行（不做模糊匹配，避免误操作到其他列车）。
+     */
     private static Train findTrain(CommandSourceStack source, String name) throws CommandSyntaxException {
         String needle = name.trim();
-        Train fallback = null;
+        List<Train> byName = new ArrayList<>();
         for (Train train : Create.RAILWAYS.trains.values()) {
-            if (train.name != null && needle.equalsIgnoreCase(train.name.getString())) {
-                return train;
-            }
             if (needle.equalsIgnoreCase(train.id.toString())) {
                 return train;
             }
-            if (fallback == null && train.name != null && train.name.getString().toLowerCase()
-                    .contains(needle.toLowerCase())) {
-                fallback = train;
+            if (train.name != null && needle.equalsIgnoreCase(train.name.getString())) {
+                byName.add(train);
             }
         }
-        if (fallback != null) {
-            return fallback;
+        if (byName.size() == 1) {
+            return byName.get(0);
+        }
+        if (byName.size() > 1) {
+            CreateTrainsScheduling.LOGGER.warn("[CTS] ambiguous train name '{}' ({} matches), refusing", needle, byName.size());
+            throw new SimpleCommandExceptionType(
+                    Component.translatable(PREFIX + "train_ambiguous", needle, byName.size())).create();
         }
         CreateTrainsScheduling.LOGGER.warn("[CTS] train not found: {}", needle);
         throw TRAIN_NOT_FOUND.create();

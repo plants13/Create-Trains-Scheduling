@@ -22,6 +22,7 @@ import dan200.computercraft.api.lua.IArguments;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import net.neoforged.fml.ModList;
 
 /**
  * 挂在 Create 车站方块实体上的 CC:Tweaked 外设（只读，**只提供调度专属数据**）。
@@ -124,7 +125,9 @@ public final class StationPeripheral implements IPeripheral {
 
     @LuaFunction(mainThread = true)
     public final String getVersion() {
-        return CreateTrainsScheduling.MODID;
+        return ModList.get().getModContainerById(CreateTrainsScheduling.MODID)
+                .map(container -> container.getModInfo().getVersion().toString())
+                .orElse("unknown");
     }
 
     // ------------------------------------------------------------------
@@ -174,13 +177,18 @@ public final class StationPeripheral implements IPeripheral {
         } catch (IllegalArgumentException ignored) {
             // 不是 UUID，按名字查
         }
+        // 车名必须唯一：重名时返回 null，与 /cts 指令的行为一致
+        Train match = null;
         for (Train train : Create.RAILWAYS.trains.values()) {
             if (trainName(train)
                     .equalsIgnoreCase(trimmed)) {
-                return train;
+                if (match != null) {
+                    return null;
+                }
+                match = train;
             }
         }
-        return null;
+        return match;
     }
 
     private static Map<String, Object> trainInfo(Train train) {
