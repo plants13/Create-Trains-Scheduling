@@ -63,7 +63,48 @@ public final class DispatchOverlay {
     private static int routeCancelW;
     private static int routeCancelH;
 
-    // 站名搜索结果区域（每帧布局，点击时复用）
+    // 站名搜索框：原生 EditBox，输入法提交的字符与聊天框走同一路径
+    private static net.minecraft.client.gui.components.EditBox searchBox;
+    private static String searchBoxSource = "";
+
+    /** 懒创建搜索框；进路规划开始时调用，并把焦点给它。 */
+    public static void ensureSearchBox() {
+        Minecraft mc = Minecraft.getInstance();
+        if (searchBox == null) {
+            searchBox = new net.minecraft.client.gui.components.EditBox(mc.font, 0, 0, 340, 12,
+                    net.minecraft.network.chat.Component.translatable("create_trains_scheduling.menu.search.placeholder"));
+            searchBox.setMaxLength(32);
+            searchBox.setBordered(false);
+            searchBox.setTextColor(0xFFE0E0E0);
+            searchBox.setResponder(text -> searchBoxSource = text);
+        }
+        searchBox.setValue("");
+        searchBox.setFocused(true);
+    }
+
+    /** 离开进路规划时释放搜索框焦点并清空。 */
+    public static void releaseSearchBox() {
+        if (searchBox != null) {
+            searchBox.setFocused(false);
+            searchBox.setValue("");
+        }
+        searchBoxSource = "";
+    }
+
+    /** 搜索框是否持有焦点（进路规划时键盘输入应交给它）。 */
+    public static boolean searchBoxFocused() {
+        return searchBox != null && searchBox.isFocused();
+    }
+
+    /** 把按键交给搜索框；返回 true 表示已消费。 */
+    public static boolean searchKeyPressed(int keyCode, int scanCode, int modifiers) {
+        return searchBoxFocused() && searchBox.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /** 把字符交给搜索框；返回 true 表示已消费。 */
+    public static boolean searchCharTyped(char codePoint, int modifiers) {
+        return searchBoxFocused() && searchBox.charTyped(codePoint, modifiers);
+    }
     private static int searchHitX;
     private static int searchHitY;
     private static int searchHitW;
@@ -292,7 +333,8 @@ public final class DispatchOverlay {
 
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
-        List<StationSearch.Hit> hits = StationSearch.search(StationSearch.query());
+        String query = searchBoxSource;
+        List<StationSearch.Hit> hits = StationSearch.search(query);
         int panelW = 360;
         int panelH = 62 + 12 + hits.size() * 12;
         int x = (screenWidth - panelW) / 2;
@@ -318,14 +360,13 @@ public final class DispatchOverlay {
                 "create_trains_scheduling.menu.route.summary", picks.size(), joined),
                 x + 10, y + 21, 0xFFFFF59D, true);
 
-        // 站名搜索框
+        // 站名搜索框（EditBox 负责绘制、光标和输入）
         int searchY = y + 34;
-        graphics.fill(x + 10, searchY, x + panelW - 10, searchY + 12, 0xFF1A1A1A);
-        String searchText = StationSearch.query().isEmpty()
-                ? net.minecraft.network.chat.Component.translatable("create_trains_scheduling.menu.search.placeholder").getString()
-                : StationSearch.query();
-        graphics.drawString(mc.font, searchText, x + 14, searchY + 2,
-                StationSearch.query().isEmpty() ? 0xFF707070 : 0xFFE0E0E0, false);
+        ensureSearchBox();
+        searchBox.setX(x + 14);
+        searchBox.setY(searchY + 2);
+        searchBox.setWidth(panelW - 28);
+        searchBox.render(graphics, 0, 0, 0f);
 
         // 搜索结果：点击加入进路（按 UUID）
         searchHitY = searchY + 16;

@@ -29,32 +29,7 @@ public final class StationSearch {
 
     private StationSearch() {}
 
-    /** 当前搜索框内容；只在路线规划面板激活期间有效。 */
-    private static String query = "";
-
-    public static String query() {
-        return query;
-    }
-
-    /** 追加一个字符（忽略控制字符）。 */
-    public static void append(char c) {
-        if (c >= 0x20 && c != 0x7F && query.length() < 32) {
-            query += c;
-        }
-    }
-
-    /** 删除最后一个字符。 */
-    public static void backspace() {
-        if (!query.isEmpty()) {
-            query = query.substring(0, query.length() - 1);
-        }
-    }
-
-    public static void clear() {
-        query = "";
-    }
-
-    /** 返回匹配 {@code query} 的车站（按名称排序，最多 {@link #MAX_RESULTS} 条）。空查询返回空列表。 */
+    /** 搜索文本由 {@link DispatchOverlay} 内的 EditBox 持有，这里只负责过滤。 */
     public static List<Hit> search(String query) {
         List<Hit> result = new ArrayList<>();
         if (query == null || query.isBlank()) {

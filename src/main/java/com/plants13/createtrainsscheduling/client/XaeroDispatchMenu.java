@@ -127,7 +127,7 @@ public final class XaeroDispatchMenu {
         HITS.clear();
         CONFIRM_HITS.clear();
         ROUTE_PICKS.clear();
-        StationSearch.clear();
+        DispatchOverlay.releaseSearchBox();
     }
 
     public static void beginStationPick() {
@@ -141,7 +141,7 @@ public final class XaeroDispatchMenu {
     public static void beginRoutePick() {
         state = State.ROUTE_PICK;
         ROUTE_PICKS.clear();
-        StationSearch.clear();
+        DispatchOverlay.ensureSearchBox();
     }
 
     /** 添加一个车站到进路末尾；重复点同一个站直接忽略。 */
