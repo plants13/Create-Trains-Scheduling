@@ -3,6 +3,7 @@
   "create_trains_scheduling.command.yes": "yes",
   "create_trains_scheduling.command.no": "no",
   "create_trains_scheduling.command.train_not_found": "No train with that name",
+  "create_trains_scheduling.command.train_ambiguous": "%s matches %s trains with that name; use the train UUID instead",
   "create_trains_scheduling.command.selftest.done": "JSON <-> Schedule round-trip self-test executed, see the log",
   "create_trains_scheduling.command.trains.empty": "There are no trains in this world",
   "create_trains_scheduling.command.trains.header": "Trains (%s):",
