@@ -67,7 +67,7 @@ public final class DispatchOverlay {
     private static net.minecraft.client.gui.components.EditBox searchBox;
     private static String searchBoxSource = "";
 
-    /** 懒创建搜索框；进路规划开始时调用，并把焦点给它。 */
+    /** 懒创建搜索框并保证它持有焦点。每帧调用，不能清空文本（否则输入会被立刻清掉）。 */
     public static void ensureSearchBox() {
         Minecraft mc = Minecraft.getInstance();
         if (searchBox == null) {
@@ -78,8 +78,16 @@ public final class DispatchOverlay {
             searchBox.setTextColor(0xFFE0E0E0);
             searchBox.setResponder(text -> searchBoxSource = text);
         }
+        if (!searchBox.isFocused()) {
+            searchBox.setFocused(true);
+        }
+    }
+
+    /** 开始一次新的进路规划：清空旧文本并聚焦。只在进入规划时调用一次。 */
+    public static void startSearchBox() {
+        ensureSearchBox();
         searchBox.setValue("");
-        searchBox.setFocused(true);
+        searchBoxSource = "";
     }
 
     /** 离开进路规划时释放搜索框焦点并清空。 */
