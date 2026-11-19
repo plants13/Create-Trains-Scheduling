@@ -351,6 +351,10 @@ public final class XaeroDispatchMenu {
             close();
         }));
         items.add(new Item(Component.translatable(PREFIX + "import_schedule"), canSchedule, XaeroDispatchMenu::openConfirmImport));
+        items.add(new Item(Component.translatable(PREFIX + "copy_uuid"), true, () -> {
+            ClientClipboard.copy(train.id.toString());
+            close();
+        }));
         items.add(new Item(Component.translatable(PREFIX + "close"), true, XaeroDispatchMenu::close));
         return items;
     }
