@@ -51,7 +51,7 @@ public final class ClientEvents {
         DispatchOverlay.renderScreenLayer(event.getGuiGraphics());
     }
 
-    /** 菜单/选站模式下按 Esc 关闭，不关地图。 */
+    /** 菜单/选站模式下按 Esc 关闭，不关地图；进路规划且搜索框聚焦时，按键交给搜索框。 */
     @SubscribeEvent
     public static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {
         if (!XaeroDispatchMenu.isActive()) {
@@ -59,6 +59,22 @@ public final class ClientEvents {
         }
         if (event.getKeyCode() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             XaeroDispatchMenu.close();
+            event.setCanceled(true);
+            return;
+        }
+        if (XaeroDispatchMenu.isRoutePicking()
+                && DispatchOverlay.searchKeyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {
+            event.setCanceled(true);
+        }
+    }
+
+    /** 进路规划且搜索框聚焦时，字符交给搜索框；其它情况不取消事件。 */
+    @SubscribeEvent
+    public static void onCharTyped(ScreenEvent.CharacterTyped.Pre event) {
+        if (!XaeroDispatchMenu.isRoutePicking()) {
+            return;
+        }
+        if (DispatchOverlay.searchCharTyped((char) event.getCodePoint(), event.getModifiers())) {
             event.setCanceled(true);
         }
     }

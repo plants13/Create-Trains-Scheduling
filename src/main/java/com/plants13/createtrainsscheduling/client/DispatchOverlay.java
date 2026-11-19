@@ -63,6 +63,61 @@ public final class DispatchOverlay {
     private static int routeCancelW;
     private static int routeCancelH;
 
+    // 站名搜索框：原生 EditBox，输入法提交的字符与聊天框走同一路径
+    private static net.minecraft.client.gui.components.EditBox searchBox;
+    private static String searchBoxSource = "";
+
+    /** 懒创建搜索框并保证它持有焦点。每帧调用，不能清空文本（否则输入会被立刻清掉）。 */
+    public static void ensureSearchBox() {
+        Minecraft mc = Minecraft.getInstance();
+        if (searchBox == null) {
+            searchBox = new net.minecraft.client.gui.components.EditBox(mc.font, 0, 0, 340, 12,
+                    net.minecraft.network.chat.Component.translatable("create_trains_scheduling.menu.search.placeholder"));
+            searchBox.setMaxLength(32);
+            searchBox.setBordered(false);
+            searchBox.setTextColor(0xFFE0E0E0);
+            searchBox.setResponder(text -> searchBoxSource = text);
+        }
+        if (!searchBox.isFocused()) {
+            searchBox.setFocused(true);
+        }
+    }
+
+    /** 开始一次新的进路规划：清空旧文本并聚焦。只在进入规划时调用一次。 */
+    public static void startSearchBox() {
+        ensureSearchBox();
+        searchBox.setValue("");
+        searchBoxSource = "";
+    }
+
+    /** 离开进路规划时释放搜索框焦点并清空。 */
+    public static void releaseSearchBox() {
+        if (searchBox != null) {
+            searchBox.setFocused(false);
+            searchBox.setValue("");
+        }
+        searchBoxSource = "";
+    }
+
+    /** 搜索框是否持有焦点（进路规划时键盘输入应交给它）。 */
+    public static boolean searchBoxFocused() {
+        return searchBox != null && searchBox.isFocused();
+    }
+
+    /** 把按键交给搜索框；返回 true 表示已消费。 */
+    public static boolean searchKeyPressed(int keyCode, int scanCode, int modifiers) {
+        return searchBoxFocused() && searchBox.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /** 把字符交给搜索框；返回 true 表示已消费。 */
+    public static boolean searchCharTyped(char codePoint, int modifiers) {
+        return searchBoxFocused() && searchBox.charTyped(codePoint, modifiers);
+    }
+    private static int searchHitX;
+    private static int searchHitY;
+    private static int searchHitW;
+    private static List<StationSearch.Hit> searchHits = List.of();
+
     private DispatchOverlay() {}
 
     /**
@@ -286,8 +341,10 @@ public final class DispatchOverlay {
 
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
+        String query = searchBoxSource;
+        List<StationSearch.Hit> hits = StationSearch.search(query);
         int panelW = 360;
-        int panelH = 62;
+        int panelH = 62 + 12 + hits.size() * 12;
         int x = (screenWidth - panelW) / 2;
         int y = screenHeight - panelH - 12;
         graphics.fill(x, y, x + panelW, y + panelH, 0xE0101010);
@@ -311,7 +368,27 @@ public final class DispatchOverlay {
                 "create_trains_scheduling.menu.route.summary", picks.size(), joined),
                 x + 10, y + 21, 0xFFFFF59D, true);
 
-        int buttonY = y + 38;
+        // 站名搜索框（EditBox 负责绘制、光标和输入）
+        int searchY = y + 34;
+        ensureSearchBox();
+        searchBox.setX(x + 14);
+        searchBox.setY(searchY + 2);
+        searchBox.setWidth(panelW - 28);
+        searchBox.render(graphics, 0, 0, 0f);
+
+        // 搜索结果：点击加入进路（按 UUID）
+        searchHitY = searchY + 16;
+        searchHitX = x + 10;
+        searchHitW = panelW - 20;
+        searchHits = hits;
+        for (int i = 0; i < hits.size(); i++) {
+            StationSearch.Hit hit = hits.get(i);
+            int hy = searchHitY + i * 12;
+            graphics.drawString(mc.font, hit.name() + "  [#" + hit.networkIndex() + "]",
+                    searchHitX + 4, hy + 2, 0xFFB0E0FF, false);
+        }
+
+        int buttonY = y + panelH - 22;
         routeConfirmX = x + 10;
         routeConfirmY = buttonY;
         routeConfirmW = 100;
@@ -370,6 +447,15 @@ public final class DispatchOverlay {
         if (inside(guiMouseX, guiMouseY, routeConfirmX, routeConfirmY, routeConfirmW, routeConfirmH)) {
             sendRoute();
             return true;
+        }
+        // 站名搜索结果：按 UUID 加入进路，不依赖站名唯一性
+        for (int i = 0; i < searchHits.size(); i++) {
+            int hy = searchHitY + i * 12;
+            if (inside(guiMouseX, guiMouseY, searchHitX, hy, searchHitW, 12)) {
+                StationSearch.Hit hit = searchHits.get(i);
+                XaeroDispatchMenu.addRoutePick(hit.id(), hit.name());
+                return true;
+            }
         }
         double worldMouseX = projection.screenToWorldX(guiMouseX);
         double worldMouseZ = projection.screenToWorldZ(guiMouseY);

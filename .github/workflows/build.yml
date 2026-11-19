@@ -3,7 +3,49 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # runData 带 -Dcts.selftest=true -Dcts.verifyMixin=true：
+      # JSON <-> Schedule 往返自检 + 信号 mixin 注入点校验。
+      # 日志里必须出现 PASS 且不能出现 FAIL / InjectionError，否则判定失败。
+      - name: Run data generation with self-tests
+        run: |
+          set -o pipefail
+          ./gradlew runData --console=plain 2>&1 | tee selftest.log
+          if grep -E '\[CTS selftest\].*(FAIL|CRASHED)' selftest.log; then
+            echo "::error::selftest reported FAIL or CRASHED"; exit 1
+          fi
+          if grep -E 'InjectionError|Mixin apply failed' selftest.log; then
+            echo "::error::mixin injection failed"; exit 1
+          fi
+          if ! grep -E '\[CTS selftest\].*PASS' selftest.log; then
+            echo "::error::no selftest PASS line found"; exit 1
+          fi
+
+      - name: Upload selftest log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: selftest-log-${{ github.sha }}
+          path: selftest.log
+          if-no-files-found: warn
+          retention-days: 14
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

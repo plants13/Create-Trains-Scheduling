@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.plants13.createtrainsscheduling.Config;
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.audit.AuditLog;
 import com.plants13.createtrainsscheduling.client.CircuitInfoCache;
 import com.plants13.createtrainsscheduling.client.ClientScheduleEditorHandler;
 import com.plants13.createtrainsscheduling.client.ClientClipboard;
@@ -112,6 +113,8 @@ public final class DispatchNetwork {
                     player.getServer()
                             .registryAccess(),
                     train, station);
+            AuditLog.record(player, "set_destination", train.id,
+                    "station=" + station.name + " ok=" + result.success(), result.success());
             reply(player, result.message());
         });
     }
@@ -149,6 +152,9 @@ public final class DispatchNetwork {
                     player.getServer()
                             .registryAccess(),
                     train, stations);
+            AuditLog.record(player, "set_route", train.id,
+                    "stations=" + stations.stream().map(s -> s.name).toList() + " ok=" + result.success(),
+                    result.success());
             reply(player, result.message());
         });
     }
@@ -168,6 +174,7 @@ public final class DispatchNetwork {
                 return;
             }
             SignalOverrideManager.grantNextSignal(train);
+            AuditLog.record(player, "override", train.id, "next_signal", true);
             reply(player, Component.translatable(PREFIX + "override.success"));
         });
     }
@@ -218,6 +225,8 @@ public final class DispatchNetwork {
                 return;
             }
             DispatchService.Result result = DispatchService.setScheduleEnabled(train, payload.enabled());
+            AuditLog.record(player, payload.enabled() ? "resume_schedule" : "disable_schedule", train.id,
+                    "ok=" + result.success(), result.success());
             reply(player, result.message());
         });
     }

@@ -3,6 +3,7 @@
 package com.plants13.createtrainsscheduling.server;
 
 import com.plants13.createtrainsscheduling.CreateTrainsScheduling;
+import com.plants13.createtrainsscheduling.audit.AuditLog;
 import com.plants13.createtrainsscheduling.compat.crn.CrnBridge;
 import com.plants13.createtrainsscheduling.compat.crn.StationDepartureQueue;
 import com.plants13.createtrainsscheduling.compat.snr.SnrCompat;
@@ -42,12 +43,14 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
+        AuditLog.bind(event.getServer());
         CreateTrainsScheduling.LOGGER.info("[CTS] server started; {}; {}", CrnBridge.describe(), SnrCompat.describe());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         // 所有 per-server 静态状态在这里集中清理；新增缓存时记得登记到这里。
+        AuditLog.unbind();
         SignalOverrideManager.clearAll();
         SignalOverrideManager.TICKING.remove();
         StationDepartureQueue.clear();
